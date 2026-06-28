@@ -178,7 +178,7 @@ export default function SignupPage() {
                     <Input
                       id="fullName"
                       type="text"
-                      placeholder="Amara Uche"
+                      placeholder="Amarache"
                       value={formData.fullName}
                       onChange={(e) => handleChange("fullName", e.target.value)}
                       className={`mt-2 bg-gray-100 border-0 ${
@@ -202,7 +202,7 @@ export default function SignupPage() {
                     <Input
                       id="email"
                       type="email"
-                      placeholder="you@health.gov.ng"
+                      placeholder="yes@health.gov.ng"
                       value={formData.email}
                       onChange={(e) => handleChange("email", e.target.value)}
                       className={`mt-2 bg-gray-100 border-0 ${
@@ -226,7 +226,7 @@ export default function SignupPage() {
                     <Input
                       id="phone"
                       type="tel"
-                      placeholder="+234 800 000 0000"
+                      placeholder="+234 8....."
                       value={formData.phone}
                       onChange={(e) => handleChange("phone", e.target.value)}
                       className={`mt-2 bg-gray-100 border-0 ${
