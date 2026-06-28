@@ -47,7 +47,7 @@ export default function SignupPage() {
     const phoneRegex = /^[0-9]{10,15}$/;
     if (!formData.phone) {
       newErrors.phone = "Phone number is required";
-    } else if (!phoneRegex.test(formData.phone.replace(/[\s-]/g, ""))) {
+    } else if (!phoneRegex.test(formData.phone.replace(/[\s\-+]/g, ""))) {
       newErrors.phone = "Invalid phone number (10-15 digits)";
     }
 

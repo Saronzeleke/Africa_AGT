@@ -6,7 +6,16 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "lint:fix": "next lint --fix",
+    "type-check": "tsc --noEmit",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "clean": "rm -rf .next node_modules",
+    "reinstall": "npm run clean && npm install",
+    "analyze": "ANALYZE=true npm run build",
+    "prod:build": "npm run type-check && npm run lint && npm run build",
+    "setup": "cp .env.local.example .env.local && npm install"
   },
   "dependencies": {
     "next": "15.0.3",
