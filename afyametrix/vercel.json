@@ -5,6 +5,8 @@
   "framework": "nextjs",
   "outputDirectory": ".next",
   "regions": ["iad1"],
+  "cleanUrls": true,
+  "trailingSlash": false,
   "functions": {
     "app/**/*.{js,ts,jsx,tsx}": {
       "memory": 1024,
@@ -30,6 +32,10 @@
         {
           "key": "Referrer-Policy",
           "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(), microphone=(), geolocation=(self)"
         }
       ]
     },
@@ -43,13 +49,19 @@
       ]
     },
     {
-      "source": "/(.*).(?:jpg|jpeg|png|gif|ico|svg|webp)",
+      "source": "/:path*\\.(jpg|jpeg|png|gif|ico|svg|webp)",
       "headers": [
         {
           "key": "Cache-Control",
           "value": "public, max-age=31536000, immutable"
         }
       ]
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/$1"
     }
   ]
 }
