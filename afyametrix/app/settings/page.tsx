@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,8 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft, User, Lock, Bell, Shield, Save } from "lucide-react";
-import { authService } from "@/lib/api/services/auth.service";
 import { useAuth } from "@/lib/hooks/useAuth";
+import { config } from "@/lib/config";
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -18,9 +18,9 @@ export default function SettingsPage() {
   const [message, setMessage] = useState("");
   
   const [profileData, setProfileData] = useState({
-    name: user?.name || "",
-    email: user?.email || "",
-    location: user?.location || "",
+    name: "",
+    email: "",
+    location: "",
   });
 
   const [passwordData, setPasswordData] = useState({
@@ -29,14 +29,72 @@ export default function SettingsPage() {
     confirmPassword: "",
   });
 
+  const [notificationSettings, setNotificationSettings] = useState({
+    emailNotifications: true,
+    smsAlerts: true,
+    systemNotifications: true,
+  });
+
+  useEffect(() => {
+    if (user) {
+      setProfileData({
+        name: user.name || "",
+        email: user.email || "",
+        location: user.location || "",
+      });
+    }
+
+    // Load notification settings from backend
+    loadNotificationSettings();
+  }, [user]);
+
+  const loadNotificationSettings = async () => {
+    try {
+      const token = localStorage.getItem(config.auth.tokenKey);
+      if (!token) return;
+
+      const response = await fetch(`${config.api.baseUrl}/user/notification-settings`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const settings = await response.json();
+        setNotificationSettings(settings);
+      }
+    } catch (error) {
+      console.error('Failed to load notification settings:', error);
+    }
+  };
+
   const handleProfileUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setMessage("");
 
     try {
-      // Profile update would need to be implemented in backend
-      setMessage("Profile updated successfully!");
+      const token = localStorage.getItem(config.auth.tokenKey);
+      if (!token) throw new Error('Not authenticated');
+
+      const response = await fetch(`${config.api.baseUrl}/user/profile`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          name: profileData.name,
+          location: profileData.location,
+        }),
+      });
+
+      if (response.ok) {
+        setMessage("Profile updated successfully!");
+      } else {
+        const error = await response.json();
+        throw new Error(error.detail || 'Profile update failed');
+      }
     } catch (error: any) {
       setMessage(`Error: ${error.message}`);
     } finally {
@@ -56,17 +114,61 @@ export default function SettingsPage() {
     }
 
     try {
-      // Password change would need to be implemented in backend
-      setMessage("Password changed successfully!");
-      setPasswordData({
-        currentPassword: "",
-        newPassword: "",
-        confirmPassword: "",
+      const token = localStorage.getItem(config.auth.tokenKey);
+      if (!token) throw new Error('Not authenticated');
+
+      const response = await fetch(`${config.api.baseUrl}/user/change-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          current_password: passwordData.currentPassword,
+          new_password: passwordData.newPassword,
+        }),
       });
+
+      if (response.ok) {
+        setMessage("Password changed successfully!");
+        setPasswordData({
+          currentPassword: "",
+          newPassword: "",
+          confirmPassword: "",
+        });
+      } else {
+        const error = await response.json();
+        throw new Error(error.detail || 'Password change failed');
+      }
     } catch (error: any) {
       setMessage(`Error: ${error.message}`);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const updateNotificationSettings = async (newSettings: typeof notificationSettings) => {
+    try {
+      const token = localStorage.getItem(config.auth.tokenKey);
+      if (!token) throw new Error('Not authenticated');
+
+      const response = await fetch(`${config.api.baseUrl}/user/notification-settings`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(newSettings),
+      });
+
+      if (response.ok) {
+        setNotificationSettings(newSettings);
+        setMessage("Notification settings updated!");
+      } else {
+        throw new Error('Failed to update notification settings');
+      }
+    } catch (error: any) {
+      setMessage(`Error: ${error.message}`);
     }
   };
 
@@ -75,6 +177,7 @@ export default function SettingsPage() {
       await logout();
     } catch (error) {
       console.error('Logout error:', error);
+      router.push('/login');
     }
   };
 
@@ -169,9 +272,6 @@ export default function SettingsPage() {
                         id="email"
                         type="email"
                         value={profileData.email}
-                        onChange={(e) =>
-                          setProfileData({ ...profileData, email: e.target.value })
-                        }
                         className="mt-1"
                         disabled
                       />
@@ -293,7 +393,15 @@ export default function SettingsPage() {
                         Receive updates about your account via email
                       </p>
                     </div>
-                    <input type="checkbox" defaultChecked className="rounded" />
+                    <input 
+                      type="checkbox" 
+                      checked={notificationSettings.emailNotifications}
+                      onChange={(e) => updateNotificationSettings({
+                        ...notificationSettings,
+                        emailNotifications: e.target.checked
+                      })}
+                      className="rounded" 
+                    />
                   </div>
                   <div className="flex items-center justify-between">
                     <div>
@@ -302,7 +410,15 @@ export default function SettingsPage() {
                         Get critical health alerts via SMS
                       </p>
                     </div>
-                    <input type="checkbox" defaultChecked className="rounded" />
+                    <input 
+                      type="checkbox" 
+                      checked={notificationSettings.smsAlerts}
+                      onChange={(e) => updateNotificationSettings({
+                        ...notificationSettings,
+                        smsAlerts: e.target.checked
+                      })}
+                      className="rounded" 
+                    />
                   </div>
                   <div className="flex items-center justify-between">
                     <div>
@@ -311,7 +427,15 @@ export default function SettingsPage() {
                         Browser notifications for important updates
                       </p>
                     </div>
-                    <input type="checkbox" defaultChecked className="rounded" />
+                    <input 
+                      type="checkbox" 
+                      checked={notificationSettings.systemNotifications}
+                      onChange={(e) => updateNotificationSettings({
+                        ...notificationSettings,
+                        systemNotifications: e.target.checked
+                      })}
+                      className="rounded" 
+                    />
                   </div>
                 </div>
               </CardContent>
