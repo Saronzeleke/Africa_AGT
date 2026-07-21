@@ -86,40 +86,93 @@ class DashboardService {
    * Get dashboard statistics
    */
   async getStats(): Promise<DashboardStats> {
-    return apiClient.get<DashboardStats>("/dashboard/stats", {
-      requiresAuth: true,
-    });
+    try {
+      return await apiClient.get<DashboardStats>("/dashboard/stats", {
+        requiresAuth: true,
+      });
+    } catch (error) {
+      console.warn('Dashboard stats API not available:', error);
+      // Return default stats when API is not ready
+      return {
+        todayCases: 0,
+        weekCases: 0,
+        monthCases: 0,
+        pendingReports: 0,
+        activeFacilities: 0,
+        completionRate: 0,
+      } as DashboardStats;
+    }
   }
 
   /**
    * Get disease breakdown
    */
   async getDiseaseBreakdown(): Promise<DiseaseStats[]> {
-    return apiClient.get<DiseaseStats[]>("/dashboard/diseases", {
-      requiresAuth: true,
-    });
+    try {
+      return await apiClient.get<DiseaseStats[]>("/dashboard/diseases", {
+        requiresAuth: true,
+      });
+    } catch (error) {
+      console.warn('Disease breakdown API not available:', error);
+      return [];
+    }
   }
 
   /**
    * Get recent case entries
    */
   async getRecentEntries(limit: number = 10): Promise<CaseEntry[]> {
-    return apiClient.get<CaseEntry[]>(
-      `/dashboard/recent?limit=${limit}`,
-      {
-        requiresAuth: true,
-      }
-    );
+    try {
+      return await apiClient.get<CaseEntry[]>(
+        `/dashboard/recent?limit=${limit}`,
+        {
+          requiresAuth: true,
+        }
+      );
+    } catch (error) {
+      console.warn('Recent entries API not available:', error);
+      return [];
+    }
   }
 
   /**
    * Get alerts
    */
   async getAlerts(unreadOnly: boolean = false): Promise<Alert[]> {
-    const endpoint = `/dashboard/alerts${
-      unreadOnly ? "?unreadOnly=true" : ""
-    }`;
-    return apiClient.get<Alert[]>(endpoint, { requiresAuth: true });
+    try {
+      const endpoint = `/dashboard/alerts${
+        unreadOnly ? "?unreadOnly=true" : ""
+      }`;
+      return await apiClient.get<Alert[]>(endpoint, { requiresAuth: true });
+    } catch (error) {
+      console.warn('Alerts API not available:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Sync offline data with server
+   */
+  async syncData(): Promise<void> {
+    try {
+      // Get pending items from localStorage
+      const syncQueue = JSON.parse(localStorage.getItem('afyametrix_sync_queue') || '[]');
+      
+      if (syncQueue.length === 0) {
+        return;
+      }
+
+      // Send to server
+      await apiClient.post("/dashboard/sync", {
+        items: syncQueue
+      }, { requiresAuth: true });
+
+      // Clear sync queue on success
+      localStorage.setItem('afyametrix_sync_queue', '[]');
+    } catch (error) {
+      console.error('Sync failed:', error);
+      throw error;
+    }
   }
 
   /**

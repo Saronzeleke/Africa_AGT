@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { DiseaseChart } from "@/components/dashboard/disease-chart";
@@ -8,80 +8,152 @@ import { RecentEntries } from "@/components/dashboard/recent-entries";
 import { SyncBanner } from "@/components/dashboard/sync-banner";
 import { FileText, RefreshCw, Calendar, AlertCircle } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { dashboardService } from "@/lib/api/services/dashboard.service";
+import { config } from "@/lib/config";
 
-// Mock data
-const mockDiseaseData = [
-  { name: "Yellow Fever", count: 22, color: "#14b8a6" },
-  { name: "Mpox", count: 32, color: "#a3a300" },
-  { name: "Cholera", count: 48, color: "#7c3aed" },
-  { name: "Meningitis", count: 30, color: "#f97316" },
-  { name: "Lassa Fever", count: 10, color: "#0000ff" },
-];
+interface DashboardStats {
+  todayCases: number;
+  weekCases: number;
+  monthCases: number;
+  pendingReports: number;
+  trend?: {
+    value: number;
+    direction: "up" | "down";
+  };
+}
 
-const mockRecentEntries = [
-  {
-    id: "1",
-    diseaseType: "Cholera",
-    cases: 14,
-    date: "4/12/2026",
-    worker: "Blessing G.",
-    status: "pending" as const,
-    createdAt: "2026-04-12",
-    updatedAt: "2026-04-12",
-  },
-  {
-    id: "2",
-    diseaseType: "Mpox",
-    cases: 8,
-    date: "4/12/2026",
-    worker: "Blessing G.",
-    status: "pending" as const,
-    createdAt: "2026-04-12",
-    updatedAt: "2026-04-12",
-  },
-  {
-    id: "3",
-    diseaseType: "Yellow Fever",
-    cases: 3,
-    date: "4/12/2026",
-    worker: "Blessing G.",
-    status: "pending" as const,
-    createdAt: "2026-04-12",
-    updatedAt: "2026-04-12",
-  },
-  {
-    id: "4",
-    diseaseType: "Meningitis",
-    cases: 11,
-    date: "4/12/2026",
-    worker: "Daniel U.",
-    status: "synced" as const,
-    createdAt: "2026-04-12",
-    updatedAt: "2026-04-12",
-  },
-  {
-    id: "5",
-    diseaseType: "Cholera",
-    cases: 10,
-    date: "4/11/2026",
-    worker: "Daniel U.",
-    status: "synced" as const,
-    createdAt: "2026-04-11",
-    updatedAt: "2026-04-11",
-  },
-];
+interface DiseaseData {
+  name: string;
+  count: number;
+  color: string;
+}
+
+interface AlertData {
+  id: string;
+  type: "warning" | "info" | "error";
+  title: string;
+  message: string;
+  location: string;
+  timestamp: string;
+}
 
 export default function DashboardPage() {
   const router = useRouter();
-  const [isOnline, setIsOnline] = useState(false);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [stats, setStats] = useState<DashboardStats>({
+    todayCases: 0,
+    weekCases: 0,
+    monthCases: 0,
+    pendingReports: 0,
+  });
+  const [diseaseData, setDiseaseData] = useState<DiseaseData[]>([]);
+  const [recentEntries, setRecentEntries] = useState([]);
+  const [alerts, setAlerts] = useState<AlertData[]>([]);
+  const [lastSync, setLastSync] = useState<string>("");
 
-  const handleSync = () => {
+  // Load dashboard data
+  useEffect(() => {
+    loadDashboardData();
+
+    // Set up online/offline listeners
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, []);
+
+  const loadDashboardData = async () => {
+    try {
+      setIsLoading(true);
+
+      // Load dashboard statistics
+      const dashboardStats = await dashboardService.getStats();
+      setStats({
+        todayCases: dashboardStats.todayCases || 0,
+        weekCases: dashboardStats.weekCases || 0,
+        monthCases: dashboardStats.monthCases || 0,
+        pendingReports: dashboardStats.pendingReports || 0,
+        trend: dashboardStats.trend ? {
+          value: dashboardStats.trend.value,
+          direction: dashboardStats.trend.direction,
+        } : undefined,
+      });
+
+      // Load disease breakdown
+      const diseases = await dashboardService.getDiseaseBreakdown();
+      setDiseaseData(diseases.map((d: any, index: number) => ({
+        name: d.name,
+        count: d.count,
+        color: getColor(index),
+      })));
+
+      // Load recent entries
+      const entries = await dashboardService.getRecentEntries();
+      setRecentEntries(entries);
+
+      // Load alerts
+      const alertsData = await dashboardService.getAlerts();
+      setAlerts(alertsData);
+
+      // Get last sync time from localStorage
+      const lastSyncTime = localStorage.getItem(config.storage.lastSyncKey);
+      if (lastSyncTime) {
+        const timeDiff = Date.now() - parseInt(lastSyncTime);
+        const hoursAgo = Math.floor(timeDiff / (1000 * 60 * 60));
+        setLastSync(hoursAgo > 0 ? `${hoursAgo}h ago` : "Just now");
+      } else {
+        setLastSync("Never");
+      }
+    } catch (error) {
+      console.error('Failed to load dashboard data:', error);
+      
+      // Fallback to show empty state instead of mock data
+      setStats({
+        todayCases: 0,
+        weekCases: 0,
+        monthCases: 0,
+        pendingReports: 0,
+      });
+      setDiseaseData([]);
+      setRecentEntries([]);
+      setAlerts([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const getColor = (index: number) => {
+    const colors = ["#14b8a6", "#a3a300", "#7c3aed", "#f97316", "#0000ff", "#e11d48"];
+    return colors[index % colors.length];
+  };
+
+  const handleSync = async () => {
+    if (!isOnline) {
+      alert("You are offline. Please check your internet connection.");
+      return;
+    }
+
     setIsSyncing(true);
-    setTimeout(() => {
+    
+    try {
+      await dashboardService.syncData();
+      localStorage.setItem(config.storage.lastSyncKey, Date.now().toString());
+      setLastSync("Just now");
+      await loadDashboardData();
+    } catch (error) {
+      console.error('Sync failed:', error);
+      alert("Sync failed. Please try again.");
+    } finally {
       setIsSyncing(false);
-      setIsOnline(true);
-    }, 2000);
+    }
   };
 
   const handleAddCase = () => {
@@ -92,13 +164,24 @@ export default function DashboardPage() {
     router.push("/data-clock-in");
   };
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-96">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Sync Status Banner */}
       <SyncBanner
         isOnline={isOnline}
-        lastSync="24hrs ago"
-        pendingCount={3}
+        lastSync={lastSync}
+        pendingCount={stats.pendingReports}
         onSync={handleSync}
         isSyncing={isSyncing}
       />
@@ -107,60 +190,96 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <StatCard
           title="Today's Cases"
-          value={47}
+          value={stats.todayCases}
           icon={FileText}
-          trend={{
-            value: 15,
+          trend={stats.trend ? {
+            value: stats.trend.value,
             label: "from yesterday",
-            direction: "up",
-          }}
+            direction: stats.trend.direction,
+          } : undefined}
         />
         <StatCard
           title="Pending Sync"
-          value={3}
+          value={stats.pendingReports}
           icon={RefreshCw}
           className="bg-blue-50"
         />
         <StatCard
           title="This Week"
-          value={218}
+          value={stats.weekCases}
           icon={Calendar}
-          trend={{
-            value: 8,
-            label: "Normal Range",
-            direction: "down",
-          }}
         />
       </div>
 
       {/* Disease Chart */}
-      <DiseaseChart data={mockDiseaseData} onAddCase={handleAddCase} />
+      {diseaseData.length > 0 && (
+        <DiseaseChart data={diseaseData} onAddCase={handleAddCase} />
+      )}
 
-      {/* Alert Card */}
-      <Card className="bg-orange-50 border-orange-200 p-6">
-        <div className="flex gap-4">
-          <div className="flex-shrink-0">
-            <div className="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center">
-              <AlertCircle className="w-6 h-6 text-white" />
+      {/* Empty State for Disease Chart */}
+      {diseaseData.length === 0 && (
+        <Card className="p-8 text-center">
+          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <FileText className="w-8 h-8 text-gray-400" />
+          </div>
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            No Cases Recorded Today
+          </h3>
+          <p className="text-gray-600 mb-4">
+            Start logging cases to see disease breakdown analytics
+          </p>
+          <button
+            onClick={handleAddCase}
+            className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90"
+          >
+            Log Your First Case
+          </button>
+        </Card>
+      )}
+
+      {/* Alerts */}
+      {alerts.map((alert) => (
+        <Card key={alert.id} className="bg-orange-50 border-orange-200 p-6">
+          <div className="flex gap-4">
+            <div className="flex-shrink-0">
+              <div className="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center">
+                <AlertCircle className="w-6 h-6 text-white" />
+              </div>
+            </div>
+            <div>
+              <h3 className="font-bold text-orange-900 mb-2">
+                {alert.title}
+              </h3>
+              <p className="text-sm text-orange-800 leading-relaxed">
+                {alert.message}
+              </p>
+              <p className="text-xs text-orange-700 mt-2">
+                {alert.type === "warning" ? "⚠️" : "ℹ️"} {new Date(alert.timestamp).toLocaleDateString()} • {alert.location}
+              </p>
             </div>
           </div>
-          <div>
-            <h3 className="font-bold text-orange-900 mb-2">
-              Cholera cases up 40% this week
-            </h3>
-            <p className="text-sm text-orange-800 leading-relaxed">
-              Port Harcourt Central sub-county has recorded a 40% increase in cholera cases.
-              Ensure clean water supplies, ORS, and treatment resources are adequately stocked.
-            </p>
-            <p className="text-xs text-orange-700 mt-2">
-              Auto-detected • April 28 • PHC-001
-            </p>
-          </div>
-        </div>
-      </Card>
+        </Card>
+      ))}
 
       {/* Recent Entries */}
-      <RecentEntries entries={mockRecentEntries} onViewAll={handleViewAll} />
+      {recentEntries.length > 0 && (
+        <RecentEntries entries={recentEntries} onViewAll={handleViewAll} />
+      )}
+
+      {/* Empty State for Recent Entries */}
+      {recentEntries.length === 0 && (
+        <Card className="p-8 text-center">
+          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Calendar className="w-8 h-8 text-gray-400" />
+          </div>
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            No Recent Entries
+          </h3>
+          <p className="text-gray-600 mb-4">
+            Your case entries will appear here once you start logging
+          </p>
+        </Card>
+      )}
     </div>
   );
 }

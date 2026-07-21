@@ -104,7 +104,7 @@ export default function NewCaseEntryPage() {
       return;
     }
 
-    // Save to localStorage (mock submission)
+    // Save entry to queue for sync
     const existingEntries = JSON.parse(
       localStorage.getItem("caseEntries") || "[]"
     );

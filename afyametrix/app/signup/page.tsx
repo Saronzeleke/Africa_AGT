@@ -184,7 +184,7 @@ export default function SignupPage() {
                     <Input
                       id="fullName"
                       type="text"
-                      placeholder="Amarache"
+                      placeholder="Enter your full name"
                       value={formData.fullName}
                       onChange={(e) => handleChange("fullName", e.target.value)}
                       className={`mt-2 bg-gray-100 border-0 ${
@@ -348,7 +348,7 @@ export default function SignupPage() {
                     <Input
                       id="fullName-chl"
                       type="text"
-                      placeholder="Daniel U."
+                      placeholder="Enter your full name"
                       value={formData.fullName}
                       onChange={(e) => handleChange("fullName", e.target.value)}
                       className={`mt-2 bg-gray-100 border-0 ${

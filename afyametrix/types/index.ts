@@ -40,8 +40,11 @@ export interface DiseaseStats {
 
 export interface DashboardStats {
   todayCases: number;
-  pendingSync: number;
-  thisWeek: number;
+  weekCases: number;
+  monthCases: number;
+  pendingReports: number;
+  activeFacilities: number;
+  completionRate: number;
   trend?: {
     value: number;
     direction: "up" | "down";

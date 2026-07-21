@@ -28,8 +28,8 @@ function VerifyEmailContent() {
   }, [resendCooldown]);
 
   const handleVerify = async () => {
-    if (verificationCode.length !== 6) {
-      setErrorMessage("Please enter a 6-digit code");
+    if (verificationCode.length < 4) {
+      setErrorMessage("Please enter the verification code");
       return;
     }
 
@@ -121,7 +121,7 @@ function VerifyEmailContent() {
           Verify Your Email
         </h2>
         <p className="text-gray-600 text-center mb-6">
-          We've sent a 6-digit verification code to
+          We've sent a verification code to your email
           <br />
           <strong>{email}</strong>
         </p>
@@ -130,7 +130,7 @@ function VerifyEmailContent() {
         <div className="mb-6">
           <Input
             type="text"
-            placeholder="Enter 6-digit code"
+            placeholder="Enter verification code"
             value={verificationCode}
             onChange={(e) => {
               const value = e.target.value.replace(/\D/g, "").slice(0, 6);
@@ -139,7 +139,7 @@ function VerifyEmailContent() {
               setVerificationStatus("pending");
             }}
             className="text-center text-2xl tracking-widest font-bold"
-            maxLength={6}
+            maxLength={10}
           />
           {errorMessage && (
             <p className="text-xs text-red-600 mt-2 flex items-center justify-center gap-1">
@@ -157,7 +157,7 @@ function VerifyEmailContent() {
           onClick={handleVerify}
           className="w-full mb-4"
           size="lg"
-          disabled={isVerifying || verificationCode.length !== 6}
+          disabled={isVerifying || verificationCode.length < 4}
         >
           {isVerifying ? (
             <>

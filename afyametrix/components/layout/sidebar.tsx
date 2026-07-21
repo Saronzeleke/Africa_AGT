@@ -111,7 +111,7 @@ export function Sidebar({ user, isOnline }: SidebarProps) {
               {user.name}
             </p>
             <p className="text-xs text-gray-500">
-              {user.role} • {user.location || "PHC - 001"}
+              {user.role} • {user.location || "No location set"}
             </p>
           </div>
           <button 
