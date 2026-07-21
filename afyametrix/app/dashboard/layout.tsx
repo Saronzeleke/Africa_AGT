@@ -6,6 +6,7 @@ import { Sidebar } from "@/components/layout/sidebar";
 import { User } from "@/types";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { authService } from "@/lib/api";
 
 export default function DashboardLayout({
   children,
@@ -15,25 +16,30 @@ export default function DashboardLayout({
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [isOnline, setIsOnline] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Check authentication
-    const role = localStorage.getItem("userRole");
-    const name = localStorage.getItem("userName");
-    const email = localStorage.getItem("userEmail");
+    // Real authentication check using backend API
+    const checkAuth = async () => {
+      try {
+        if (!authService.isAuthenticated()) {
+          router.push("/login");
+          return;
+        }
 
-    if (!role || !name || !email) {
-      router.push("/login");
-      return;
-    }
+        const currentUser = await authService.getCurrentUser();
+        setUser(currentUser);
+      } catch (error) {
+        console.error("Authentication check failed:", error);
+        // Clear invalid auth data
+        authService.logout();
+        router.push("/login");
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-    setUser({
-      id: "1",
-      email,
-      name,
-      role: role as "CHW" | "CHL",
-      location: "PHC - 001",
-    });
+    checkAuth();
 
     // Monitor online status
     const handleOnline = () => setIsOnline(true);
@@ -47,6 +53,17 @@ export default function DashboardLayout({
       window.removeEventListener("offline", handleOffline);
     };
   }, [router]);
+
+  if (isLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!user) {
     return null;

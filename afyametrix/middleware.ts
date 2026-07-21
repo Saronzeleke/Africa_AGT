@@ -37,7 +37,8 @@ export function middleware(request: NextRequest) {
   const isPublicRoute = publicRoutes.some((route) => pathname === route);
 
   // Get authentication token from cookies or headers
-  const token = request.cookies.get("afyametrix_token")?.value;
+  const token = request.cookies.get("afyametrix_token")?.value ||
+               request.headers.get("authorization")?.replace("Bearer ", "");
 
   // Redirect to login if accessing protected route without authentication
   if (isProtectedRoute && !token) {

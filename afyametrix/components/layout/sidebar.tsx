@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Logo } from "@/components/logo";
 import {
   LayoutDashboard,
@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { User } from "@/types";
+import { authService } from "@/lib/api/services/auth.service";
 
 interface SidebarProps {
   user: User;
@@ -52,6 +53,16 @@ const menuItems = [
 
 export function Sidebar({ user, isOnline }: SidebarProps) {
   const pathname = usePathname();
+  const router = useRouter();
+
+  const handleRefresh = async () => {
+    try {
+      // Force refresh dashboard data
+      window.location.reload();
+    } catch (error) {
+      console.error('Refresh error:', error);
+    }
+  };
 
   return (
     <aside className="w-60 bg-gradient-to-b from-cyan-50 to-blue-50 border-r border-gray-200 flex flex-col h-screen sticky top-0">
@@ -103,7 +114,11 @@ export function Sidebar({ user, isOnline }: SidebarProps) {
               {user.role} • {user.location || "PHC - 001"}
             </p>
           </div>
-          <button className="p-2 hover:bg-white/50 rounded-lg transition-colors">
+          <button 
+            onClick={handleRefresh}
+            className="p-2 hover:bg-white/50 rounded-lg transition-colors"
+            title="Refresh data"
+          >
             <RefreshCw className="w-4 h-4 text-gray-600" />
           </button>
         </div>
@@ -119,12 +134,20 @@ export function Sidebar({ user, isOnline }: SidebarProps) {
           >
             {isOnline ? "Online" : "Offline"}
           </div>
-          <button className="p-2 hover:bg-white/50 rounded-lg transition-colors">
+          <Link
+            href="/notifications"
+            className="p-2 hover:bg-white/50 rounded-lg transition-colors"
+            title="Notifications"
+          >
             <Bell className="w-4 h-4 text-gray-600" />
-          </button>
-          <button className="p-2 hover:bg-white/50 rounded-lg transition-colors">
+          </Link>
+          <Link
+            href="/settings"
+            className="p-2 hover:bg-white/50 rounded-lg transition-colors"
+            title="Settings"
+          >
             <Settings className="w-4 h-4 text-gray-600" />
-          </button>
+          </Link>
         </div>
       </div>
     </aside>

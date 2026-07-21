@@ -6,6 +6,7 @@ import { Logo } from "@/components/logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Mail, CheckCircle, XCircle, Loader2 } from "lucide-react";
+import { authService } from "@/lib/api/services/auth.service";
 
 function VerifyEmailContent() {
   const router = useRouter();
@@ -35,38 +36,52 @@ function VerifyEmailContent() {
     setIsVerifying(true);
     setErrorMessage("");
 
-    // Simulate API call
-    setTimeout(() => {
-      // In production, this would:
-      // 1. Send code to backend API
-      // 2. Backend verifies the code
-      // 3. Backend activates the account
-      // 4. Return success/error
-
-      // Mock verification (accept "123456" as valid code)
-      if (verificationCode === "123456") {
-        setVerificationStatus("success");
-        setTimeout(() => {
-          router.push("/login");
-        }, 2000);
-      } else {
-        setVerificationStatus("error");
-        setErrorMessage("Invalid verification code. Please try again.");
-      }
+    // Call backend API using auth service
+    try {
+      await authService.verifyEmail({
+        email: email,
+        code: verificationCode,
+      });
+      
+      setVerificationStatus("success");
+      setTimeout(() => {
+        router.push("/login");
+      }, 2000);
+    } catch (error: any) {
+      console.error('Verification error:', error);
+      setVerificationStatus("error");
+      setErrorMessage(error.message || "Invalid verification code. Please try again.");
+    } finally {
       setIsVerifying(false);
-    }, 1500);
+    }
   };
 
   const handleResend = async () => {
     if (resendCooldown > 0) return;
 
-    // Simulate API call
-    setResendCooldown(60);
+    try {
+      // Call backend API to resend verification email  
+      const response = await fetch('http://localhost:8000/api/auth/forgot-password', {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: email,
+        }),
+      });
 
-    // In production, this would:
-    // 1. Call backend API to resend verification email
-    // 2. Show success message
-    alert("Verification code resent! Check your email.");
+      if (response.ok) {
+        setResendCooldown(60);
+        alert("Verification code resent! Check your email.");
+      } else {
+        const errorData = await response.json();
+        alert(`Failed to resend code: ${errorData.detail || 'Please try again later.'}`);
+      }
+    } catch (error) {
+      console.error('Resend error:', error);
+      alert("Network error. Please check your connection and try again.");
+    }
   };
 
   if (verificationStatus === "success") {
@@ -133,7 +148,7 @@ function VerifyEmailContent() {
             </p>
           )}
           <p className="text-xs text-gray-500 text-center mt-2">
-            Hint: Use code <strong>123456</strong> for demo
+            Check your email for the verification code
           </p>
         </div>
 

@@ -35,8 +35,8 @@ export function useAuth() {
   // Login mutation
   const loginMutation = useMutation({
     mutationFn: (credentials: LoginRequest) => authService.login(credentials),
-    onSuccess: (data) => {
-      queryClient.setQueryData(["user"], data.user);
+    onSuccess: (userData) => {
+      queryClient.setQueryData(["user"], userData);
       router.push("/dashboard");
     },
   });
@@ -44,12 +44,9 @@ export function useAuth() {
   // Signup mutation
   const signupMutation = useMutation({
     mutationFn: (data: SignupRequest) => authService.signup(data),
-    onSuccess: (data) => {
-      if (data.requiresVerification) {
-        router.push(`/verify-email?email=${encodeURIComponent(data.user.email)}`);
-      } else {
-        router.push("/login");
-      }
+    onSuccess: (response, variables) => {
+      // Always redirect to email verification for new registrations
+      router.push(`/verify-email?email=${encodeURIComponent(variables.email)}`);
     },
   });
 
@@ -79,31 +76,9 @@ export function useAuth() {
   // Verify email mutation
   const verifyEmailMutation = useMutation({
     mutationFn: (data: VerifyEmailRequest) => authService.verifyEmail(data),
-    onSuccess: (data) => {
-      if (data.token) {
-        queryClient.setQueryData(["user"], data.user);
-        router.push("/dashboard");
-      }
+    onSuccess: () => {
+      router.push("/login");
     },
-  });
-
-  // Update profile mutation
-  const updateProfileMutation = useMutation({
-    mutationFn: (data: Partial<User>) => authService.updateProfile(data),
-    onSuccess: (data) => {
-      queryClient.setQueryData(["user"], data);
-    },
-  });
-
-  // Change password mutation
-  const changePasswordMutation = useMutation({
-    mutationFn: ({
-      currentPassword,
-      newPassword,
-    }: {
-      currentPassword: string;
-      newPassword: string;
-    }) => authService.changePassword(currentPassword, newPassword),
   });
 
   return {
@@ -141,15 +116,5 @@ export function useAuth() {
     verifyEmailAsync: verifyEmailMutation.mutateAsync,
     isVerifyingEmail: verifyEmailMutation.isPending,
     verifyEmailError: verifyEmailMutation.error,
-
-    updateProfile: updateProfileMutation.mutate,
-    updateProfileAsync: updateProfileMutation.mutateAsync,
-    isUpdatingProfile: updateProfileMutation.isPending,
-    updateProfileError: updateProfileMutation.error,
-
-    changePassword: changePasswordMutation.mutate,
-    changePasswordAsync: changePasswordMutation.mutateAsync,
-    isChangingPassword: changePasswordMutation.isPending,
-    changePasswordError: changePasswordMutation.error,
   };
 }

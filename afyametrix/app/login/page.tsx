@@ -8,20 +8,40 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Link from "next/link";
+import { authService } from "@/lib/api/services/auth.service";
+import { UserRole } from "@/types";
 
 export default function LoginPage() {
   const [role, setRole] = useState<"CHW" | "CHL">("CHW");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
   const router = useRouter();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Mock authentication - store role in localStorage
-    localStorage.setItem("userRole", role);
-    localStorage.setItem("userName", role === "CHW" ? "Amara Uche" : "Daniel U.");
-    localStorage.setItem("userEmail", email);
-    router.push("/dashboard");
+    setIsLoading(true);
+    setError("");
+    
+    try {
+      // Use the real auth service with updated interface
+      await authService.login({
+        email,
+        password,
+      });
+
+      // Get redirect URL from query params or default to dashboard
+      const searchParams = new URLSearchParams(window.location.search);
+      const redirectTo = searchParams.get('redirect') || '/dashboard';
+      
+      router.push(redirectTo);
+    } catch (error: any) {
+      console.error('Login failed:', error);
+      setError(error.message || 'Login failed. Please check your credentials.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -64,6 +84,12 @@ export default function LoginPage() {
 
               <TabsContent value="CHW">
                 <form onSubmit={handleLogin} className="space-y-4">
+                  {error && (
+                    <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md text-sm">
+                      {error}
+                    </div>
+                  )}
+                  
                   <div>
                     <Label htmlFor="email" className="text-gray-700 font-semibold">
                       EMAIL
@@ -76,6 +102,7 @@ export default function LoginPage() {
                       onChange={(e) => setEmail(e.target.value)}
                       className="mt-2 bg-gray-100 border-0"
                       required
+                      disabled={isLoading}
                     />
                   </div>
 
@@ -91,6 +118,7 @@ export default function LoginPage() {
                       onChange={(e) => setPassword(e.target.value)}
                       className="mt-2 bg-gray-100 border-0"
                       required
+                      disabled={isLoading}
                     />
                   </div>
 
@@ -101,8 +129,8 @@ export default function LoginPage() {
                     Forgot Password?
                   </Link>
 
-                  <Button type="submit" className="w-full" size="lg">
-                    Log In
+                  <Button type="submit" className="w-full" size="lg" disabled={isLoading}>
+                    {isLoading ? "Logging in..." : "Log In"}
                   </Button>
 
                   <p className="text-center text-sm text-gray-600 mt-4">
@@ -116,6 +144,12 @@ export default function LoginPage() {
 
               <TabsContent value="CHL">
                 <form onSubmit={handleLogin} className="space-y-4">
+                  {error && (
+                    <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md text-sm">
+                      {error}
+                    </div>
+                  )}
+                  
                   <div>
                     <Label htmlFor="email-chl" className="text-gray-700 font-semibold">
                       EMAIL
@@ -128,6 +162,7 @@ export default function LoginPage() {
                       onChange={(e) => setEmail(e.target.value)}
                       className="mt-2 bg-gray-100 border-0"
                       required
+                      disabled={isLoading}
                     />
                   </div>
 
@@ -143,6 +178,7 @@ export default function LoginPage() {
                       onChange={(e) => setPassword(e.target.value)}
                       className="mt-2 bg-gray-100 border-0"
                       required
+                      disabled={isLoading}
                     />
                   </div>
 
@@ -153,8 +189,8 @@ export default function LoginPage() {
                     Forgot Password?
                   </Link>
 
-                  <Button type="submit" className="w-full" size="lg">
-                    Log In
+                  <Button type="submit" className="w-full" size="lg" disabled={isLoading}>
+                    {isLoading ? "Logging in..." : "Log In"}
                   </Button>
 
                   <p className="text-center text-sm text-gray-600 mt-4">

@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Link from "next/link";
+import { authService } from "@/lib/api/services/auth.service";
+import { UserRole } from "@/types";
 import { AlertCircle, CheckCircle } from "lucide-react";
 
 export default function SignupPage() {
@@ -83,22 +85,26 @@ export default function SignupPage() {
 
     setIsSubmitting(true);
 
-    // Simulate API call
-    setTimeout(() => {
-      // In production, this would:
-      // 1. Send data to backend API
-      // 2. Backend creates user account
-      // 3. Backend sends verification email
-      // 4. Show success message
+    try {
+      // Use real auth service with updated interface
+      await authService.signup({
+        name: formData.fullName,
+        email: formData.email,
+        password: formData.password,
+        role: role as UserRole,
+      });
 
       setShowSuccess(true);
-      setIsSubmitting(false);
-
       // Redirect to verification page after 3 seconds
       setTimeout(() => {
         router.push(`/verify-email?email=${encodeURIComponent(formData.email)}`);
       }, 3000);
-    }, 1500);
+    } catch (error: any) {
+      console.error('Registration error:', error);
+      setErrors({ email: error.message || "Registration failed. Please try again." });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleChange = (field: string, value: string) => {
