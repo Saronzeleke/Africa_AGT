@@ -156,3 +156,32 @@ export function isOnline(): boolean {
 export function sanitizeFilename(filename: string): string {
   return filename.replace(/[^a-z0-9.-]/gi, "_").toLowerCase();
 }
+
+/**
+ * Store JWT token safely (without JSON encoding)
+ */
+export function setTokenToStorage(key: string, token: string): boolean {
+  if (!isBrowser()) return false;
+  
+  try {
+    window.localStorage.setItem(key, token);
+    return true;
+  } catch (error) {
+    console.error(`Error setting token to localStorage "${key}":`, error);
+    return false;
+  }
+}
+
+/**
+ * Get JWT token safely
+ */
+export function getTokenFromStorage(key: string): string | null {
+  if (!isBrowser()) return null;
+  
+  try {
+    return window.localStorage.getItem(key);
+  } catch (error) {
+    console.error(`Error reading token from localStorage "${key}":`, error);
+    return null;
+  }
+}

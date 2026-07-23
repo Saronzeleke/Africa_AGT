@@ -7,6 +7,7 @@ import { User } from "@/types";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { authService } from "@/lib/api";
+import { config } from "@/lib/config";
 
 export default function DashboardLayout({
   children,
@@ -31,8 +32,12 @@ export default function DashboardLayout({
         setUser(currentUser);
       } catch (error) {
         console.error("Authentication check failed:", error);
-        // Clear invalid auth data
-        authService.logout();
+        // Clear any corrupted auth data
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem(config.auth.tokenKey);
+          localStorage.removeItem(config.auth.userKey);
+          document.cookie = 'afyametrix_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+        }
         router.push("/login");
       } finally {
         setIsLoading(false);

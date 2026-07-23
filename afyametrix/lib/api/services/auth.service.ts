@@ -6,7 +6,7 @@
 import { apiClient } from "../client";
 import { User, UserRole } from "@/types";
 import { config } from "@/lib/config";
-import { setToStorage, removeFromStorage } from "@/lib/utils";
+import { setToStorage, removeFromStorage, getTokenFromStorage, setTokenToStorage } from "@/lib/utils";
 
 export interface LoginRequest {
   email: string;
@@ -232,7 +232,10 @@ class AuthService {
    * Store authentication data
    */
   private storeAuthData(response: LoginResponse): void {
-    setToStorage(config.auth.tokenKey, response.access_token);
+    // Store token as plain string to avoid JWT corruption
+    setTokenToStorage(config.auth.tokenKey, response.access_token);
+    
+    // Store user data as JSON
     setToStorage(config.auth.userKey, {
       id: response.user.id,
       name: response.user.name,
@@ -250,15 +253,19 @@ class AuthService {
    * Get stored token
    */
   private getStoredToken(): string | null {
-    if (typeof window === 'undefined') return null;
-    return localStorage.getItem(config.auth.tokenKey);
+    return getTokenFromStorage(config.auth.tokenKey);
   }
 
   /**
    * Clear authentication data
    */
   private clearAuthData(): void {
-    removeFromStorage(config.auth.tokenKey);
+    // Remove token directly using utility
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem(config.auth.tokenKey);
+    }
+    
+    // Remove user data using utility
     removeFromStorage(config.auth.userKey);
     
     // Clear cookie (client-side only)
@@ -271,9 +278,8 @@ class AuthService {
    * Check if user is authenticated
    */
   isAuthenticated(): boolean {
-    if (typeof window === 'undefined') return false;
-    const token = localStorage.getItem(config.auth.tokenKey);
-    return !!token;
+    const token = getTokenFromStorage(config.auth.tokenKey);
+    return !!token && token !== 'null' && token !== 'undefined';
   }
 
   /**
