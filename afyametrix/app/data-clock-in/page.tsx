@@ -42,8 +42,8 @@ export default function DataClockInPage() {
       setIsLoading(true);
       
       // Load case entries
-      const caseEntries = await caseService.getCases();
-      setEntries(caseEntries);
+      const caseResponse = await caseService.getCases();
+      setEntries(caseResponse.cases);
 
       // Load drafts from localStorage
       const savedDrafts = JSON.parse(localStorage.getItem('afyametrix_drafts') || '[]');
