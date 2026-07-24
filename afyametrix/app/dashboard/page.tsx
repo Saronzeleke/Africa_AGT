@@ -246,7 +246,7 @@ export default function DashboardPage() {
                 {alert.message}
               </p>
               <p className="text-xs text-orange-700 mt-2">
-                {alert.type === "warning" ? "⚠️" : "ℹ️"} {new Date(alert.timestamp).toLocaleDateString()} • {alert.location}
+                {alert.type === "warning" ? "⚠️" : "ℹ️"} {new Date(alert.createdAt).toLocaleDateString()} • {alert.location || 'Unknown location'}
               </p>
             </div>
           </div>
