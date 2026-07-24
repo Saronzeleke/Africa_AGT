@@ -54,22 +54,10 @@ export default function DashboardPage() {
   const [alerts, setAlerts] = useState<AlertData[]>([]);
   const [lastSync, setLastSync] = useState<string>("");
 
-  // Load dashboard data
-  useEffect(() => {
-    loadDashboardData();
-
-    // Set up online/offline listeners
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
-
-    window.addEventListener("online", handleOnline);
-    window.addEventListener("offline", handleOffline);
-
-    return () => {
-      window.removeEventListener("online", handleOnline);
-      window.removeEventListener("offline", handleOffline);
-    };
-  }, [loadDashboardData]);
+  const getColor = (index: number) => {
+    const colors = ["#14b8a6", "#a3a300", "#7c3aed", "#f97316", "#0000ff", "#e11d48"];
+    return colors[index % colors.length];
+  };
 
   const loadDashboardData = useCallback(async () => {
     try {
@@ -131,10 +119,22 @@ export default function DashboardPage() {
     }
   }, []);
 
-  const getColor = (index: number) => {
-    const colors = ["#14b8a6", "#a3a300", "#7c3aed", "#f97316", "#0000ff", "#e11d48"];
-    return colors[index % colors.length];
-  };
+  // Load dashboard data
+  useEffect(() => {
+    loadDashboardData();
+
+    // Set up online/offline listeners
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, [loadDashboardData]);
 
   const handleSync = async () => {
     if (!isOnline) {
