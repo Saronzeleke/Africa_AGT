@@ -8,7 +8,7 @@ import { RecentEntries } from "@/components/dashboard/recent-entries";
 import { SyncBanner } from "@/components/dashboard/sync-banner";
 import { FileText, RefreshCw, Calendar, AlertCircle } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { dashboardService } from "@/lib/api/services/dashboard.service";
+import { dashboardService, Alert } from "@/lib/api/services/dashboard.service";
 import { config } from "@/lib/config";
 import { CaseEntry } from "@/types";
 
@@ -29,15 +29,6 @@ interface DiseaseData {
   color: string;
 }
 
-interface AlertData {
-  id: string;
-  type: "warning" | "info" | "error";
-  title: string;
-  message: string;
-  location: string;
-  timestamp: string;
-}
-
 export default function DashboardPage() {
   const router = useRouter();
   const [isOnline, setIsOnline] = useState(navigator.onLine);
@@ -51,7 +42,7 @@ export default function DashboardPage() {
   });
   const [diseaseData, setDiseaseData] = useState<DiseaseData[]>([]);
   const [recentEntries, setRecentEntries] = useState<CaseEntry[]>([]);
-  const [alerts, setAlerts] = useState<AlertData[]>([]);
+  const [alerts, setAlerts] = useState<Alert[]>([]);
   const [lastSync, setLastSync] = useState<string>("");
 
   const getColor = (index: number) => {
