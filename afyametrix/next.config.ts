@@ -4,9 +4,9 @@ const nextConfig: NextConfig = {
   // Production optimizations
   reactStrictMode: true,
   
-  // Production output (disable for local dev)
-  // output: 'export',
-  // trailingSlash: true,
+  // Enable static export for Netlify
+  output: 'export',
+  trailingSlash: true,
   
   // Image optimization for static export
   images: {
