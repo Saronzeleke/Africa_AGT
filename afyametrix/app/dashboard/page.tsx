@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { DiseaseChart } from "@/components/dashboard/disease-chart";
@@ -10,6 +10,7 @@ import { FileText, RefreshCw, Calendar, AlertCircle } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { dashboardService } from "@/lib/api/services/dashboard.service";
 import { config } from "@/lib/config";
+import { CaseEntry } from "@/types";
 
 interface DashboardStats {
   todayCases: number;
@@ -49,7 +50,7 @@ export default function DashboardPage() {
     pendingReports: 0,
   });
   const [diseaseData, setDiseaseData] = useState<DiseaseData[]>([]);
-  const [recentEntries, setRecentEntries] = useState([]);
+  const [recentEntries, setRecentEntries] = useState<CaseEntry[]>([]);
   const [alerts, setAlerts] = useState<AlertData[]>([]);
   const [lastSync, setLastSync] = useState<string>("");
 
@@ -68,9 +69,9 @@ export default function DashboardPage() {
       window.removeEventListener("online", handleOnline);
       window.removeEventListener("offline", handleOffline);
     };
-  }, []);
+  }, [loadDashboardData]);
 
-  const loadDashboardData = async () => {
+  const loadDashboardData = useCallback(async () => {
     try {
       setIsLoading(true);
 
@@ -128,7 +129,7 @@ export default function DashboardPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   const getColor = (index: number) => {
     const colors = ["#14b8a6", "#a3a300", "#7c3aed", "#f97316", "#0000ff", "#e11d48"];
