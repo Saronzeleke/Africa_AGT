@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { BackButton } from "@/components/ui/back-button";
 import { SyncBanner } from "@/components/dashboard/sync-banner";
 import { Plus, Filter } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -110,6 +111,9 @@ export default function DataClockInPage() {
 
   return (
     <div className="space-y-6">
+      {/* Back Button */}
+      <BackButton fallbackUrl="/dashboard" className="mb-4" />
+      
       {/* Sync Status Banner */}
       <SyncBanner
         isOnline={isOnline}

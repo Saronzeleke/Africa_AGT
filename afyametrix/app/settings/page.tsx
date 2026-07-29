@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { BackButton } from "@/components/ui/back-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -194,6 +195,11 @@ export default function SettingsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Back Button */}
+      <div className="p-6 pb-0">
+        <BackButton fallbackUrl="/dashboard" />
+      </div>
+      
       {/* Header */}
       <div className="bg-white border-b border-gray-200">
         <div className="max-w-6xl mx-auto px-4 py-6">

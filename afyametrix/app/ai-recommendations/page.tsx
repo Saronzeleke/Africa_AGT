@@ -1,11 +1,14 @@
 "use client";
 
 import { Card } from "@/components/ui/card";
+import { BackButton } from "@/components/ui/back-button";
 import { Sparkles } from "lucide-react";
 
 export default function AIRecommendationsPage() {
   return (
     <div className="space-y-6">
+      <BackButton fallbackUrl="/dashboard" />
+      
       <div>
         <h1 className="text-2xl font-bold text-gray-900">AI Recommendations</h1>
         <p className="text-sm text-gray-600">CHW - Health Worker</p>

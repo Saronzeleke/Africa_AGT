@@ -1,11 +1,14 @@
 "use client";
 
 import { Card } from "@/components/ui/card";
+import { BackButton } from "@/components/ui/back-button";
 import { Map } from "lucide-react";
 
 export default function HeatmapPage() {
   return (
     <div className="space-y-6">
+      <BackButton fallbackUrl="/dashboard" />
+      
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Heatmap</h1>
         <p className="text-sm text-gray-600">CHW - Health Worker</p>

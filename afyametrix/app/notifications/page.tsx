@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { BackButton } from "@/components/ui/back-button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
@@ -180,6 +181,11 @@ export default function NotificationsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Back Button */}
+      <div className="p-6 pb-0">
+        <BackButton fallbackUrl="/dashboard" />
+      </div>
+      
       {/* Header */}
       <div className="bg-white border-b border-gray-200">
         <div className="max-w-6xl mx-auto px-4 py-6">
