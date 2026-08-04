@@ -4,7 +4,7 @@
  */
 
 import { config, getApiUrl } from "../config";
-import { getFromStorage, removeFromStorage } from "../utils";
+import { isBrowser } from "../utils";
 
 export class APIError extends Error {
   constructor(
@@ -47,7 +47,15 @@ class APIClient {
    * Get authentication token
    */
   private getAuthToken(): string | null {
-    return getFromStorage<string | null>(config.auth.tokenKey, null);
+    // Direct localStorage access for JWT tokens (strings, not JSON)
+    if (!isBrowser()) return null;
+    
+    try {
+      return window.localStorage.getItem(config.auth.tokenKey);
+    } catch (error) {
+      console.error(`Error reading token from localStorage:`, error);
+      return null;
+    }
   }
 
   /**
@@ -90,8 +98,12 @@ class APIClient {
       
       // Handle authentication errors
       if (response.status === 401) {
-        removeFromStorage(config.auth.tokenKey);
-        removeFromStorage(config.auth.userKey);
+        // Clear invalid token
+        if (typeof window !== 'undefined') {
+          window.localStorage.removeItem(config.auth.tokenKey);
+          window.localStorage.removeItem(config.auth.userKey);
+          document.cookie = 'afyametrix_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+        }
         throw new AuthenticationError(
           errorData.message || "Your session has expired. Please log in again."
         );

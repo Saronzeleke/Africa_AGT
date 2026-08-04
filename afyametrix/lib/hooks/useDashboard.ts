@@ -141,24 +141,25 @@ export function useAlerts(unreadOnly: boolean = false) {
   };
 }
 
-// Hook for trends data
-export function useTrends(params: TrendsDataParams) {
+// Hook for trends/forecasts data
+export function useForecasts(params?: TrendsDataParams) {
   const {
-    data: trendsData,
+    data: forecastsData,
     isLoading,
     error,
+    refetch,
   } = useQuery({
-    queryKey: ["dashboard", "trends", params],
-    queryFn: () => dashboardService.getTrends(params),
-    enabled: !!(params.startDate && params.endDate),
+    queryKey: ["dashboard", "forecasts", params],
+    queryFn: () => dashboardService.getForecasts(params),
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
   return {
-    trends: trendsData?.trends || [],
-    forecast: trendsData?.forecast || [],
+    forecasts: forecastsData?.forecasts || [],
+    total: forecastsData?.total || 0,
     isLoading,
     error,
+    refetch,
   };
 }
 
@@ -175,13 +176,73 @@ export function useHeatmap(params?: HeatmapDataParams) {
   });
 
   return {
-    locations: heatmapData?.locations || [],
+    regions: Array.isArray(heatmapData?.regions) ? heatmapData.regions : [],
     isLoading,
     error,
   };
 }
 
-// Hook for AI recommendations
+// Hook for AI recommendations - combined data
+export function useAIRecommendations(params?: { country?: string; region?: string }) {
+  const queryClient = useQueryClient();
+  
+  // Fetch all AI recommendation data sources
+  const allocationsQuery = useQuery({
+    queryKey: ["ai", "allocations"],
+    queryFn: () => dashboardService.getResourceAllocations(),
+    staleTime: 10 * 60 * 1000, // 10 minutes
+  });
+  
+  const clustersQuery = useQuery({
+    queryKey: ["ai", "clusters"],
+    queryFn: () => dashboardService.getClusters(),
+    staleTime: 10 * 60 * 1000, // 10 minutes
+  });
+  
+  const narrativeQuery = useQuery({
+    queryKey: ["ai", "narrative", params],
+    queryFn: () => dashboardService.getNarrative(params),
+    staleTime: 10 * 60 * 1000, // 10 minutes
+  });
+
+  const refetchAll = () => {
+    allocationsQuery.refetch();
+    clustersQuery.refetch();
+    narrativeQuery.refetch();
+  };
+
+  return {
+    // Resource allocation data
+    allocations: allocationsQuery.data?.allocations || [],
+    allocationsTotal: allocationsQuery.data?.total || 0,
+    
+    // Intervention cluster data
+    clusters: clustersQuery.data?.clusters || [],
+    
+    // AI narrative data
+    narrative: narrativeQuery.data,
+    
+    // Loading states
+    isLoading: allocationsQuery.isLoading || clustersQuery.isLoading || narrativeQuery.isLoading,
+    isLoadingAllocations: allocationsQuery.isLoading,
+    isLoadingClusters: clustersQuery.isLoading,
+    isLoadingNarrative: narrativeQuery.isLoading,
+    
+    // Error states
+    error: allocationsQuery.error || clustersQuery.error || narrativeQuery.error,
+    allocationsError: allocationsQuery.error,
+    clustersError: clustersQuery.error,
+    narrativeError: narrativeQuery.error,
+    
+    // Refetch functions
+    refetchAll,
+    refetchAllocations: allocationsQuery.refetch,
+    refetchClusters: clustersQuery.refetch,
+    refetchNarrative: narrativeQuery.refetch,
+  };
+}
+
+// Hook for AI recommendations (legacy compatibility)
 export function useRecommendations() {
   const {
     data: recommendationsData,

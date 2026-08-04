@@ -11,9 +11,10 @@ export {
   useDiseaseBreakdown,
   useRecentEntries,
   useAlerts,
-  useTrends,
+  useForecasts,
   useHeatmap,
   useRecommendations,
+  useAIRecommendations,
   useExportData,
 } from "./useDashboard";
 export { useOnlineStatus } from "./useOnlineStatus";

@@ -41,16 +41,26 @@ export default function LandingPage() {
         </Button>
 
         {/* Login Link */}
-        <p className="text-white/90 text-sm">
-          Not a first timer?{" "}
-          <Link href="/login" className="text-cyan-300 hover:text-cyan-200 font-semibold underline">
-            Log In
-          </Link>
-          {" "}or{" "}
-          <Link href="/signup" className="text-cyan-300 hover:text-cyan-200 font-semibold underline">
-            Sign Up
-          </Link>
-        </p>
+        <div className="text-white/90 text-sm text-center">
+          <p className="mb-2">Not a first timer?</p>
+          <div className="flex items-center justify-center gap-4">
+            <Link 
+              href="/login" 
+              className="px-4 py-2 text-cyan-300 hover:text-white border border-cyan-300 hover:bg-cyan-600 rounded-lg font-semibold transition-all duration-200 hover:border-cyan-500"
+              prefetch={true}
+            >
+              Log In
+            </Link>
+            <span className="text-white/60">or</span>
+            <Link 
+              href="/signup" 
+              className="px-4 py-2 text-cyan-300 hover:text-white border border-cyan-300 hover:bg-cyan-600 rounded-lg font-semibold transition-all duration-200 hover:border-cyan-500"
+              prefetch={true}
+            >
+              Sign Up
+            </Link>
+          </div>
+        </div>
       </div>
     </div>
   );

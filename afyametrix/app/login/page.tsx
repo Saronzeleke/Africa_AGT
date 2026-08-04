@@ -25,20 +25,42 @@ export default function LoginPage() {
     setError("");
     
     try {
-      // Use the real auth service with updated interface
-      await authService.login({
-        email,
-        password,
+      // Use unified API client
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000'}/api/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,
+          password,
+        }),
       });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.detail || 'Login failed');
+      }
+
+      const data = await response.json();
+      
+      // Store token and user in cookies (SSR compatible)
+      if (typeof document !== 'undefined') {
+        const isSecure = window.location.protocol === 'https:';
+        const secureFlag = isSecure ? 'secure; ' : '';
+        document.cookie = `afyametrix_token=${data.access_token}; path=/; ${secureFlag}samesite=strict; max-age=86400`;
+        document.cookie = `afyametrix_user=${encodeURIComponent(JSON.stringify(data.user))}; path=/; ${secureFlag}samesite=strict; max-age=86400`;
+      }
 
       // Get redirect URL from query params or default to dashboard
       const searchParams = new URLSearchParams(window.location.search);
       const redirectTo = searchParams.get('redirect') || '/dashboard';
       
-      router.push(redirectTo);
+      // Use window.location for immediate redirect
+      window.location.href = redirectTo;
     } catch (error: any) {
       console.error('Login failed:', error);
-      setError('Invalid credentials. Please check your email and password.');
+      setError(error.message || 'Invalid credentials. Please check your email and password.');
     } finally {
       setIsLoading(false);
     }

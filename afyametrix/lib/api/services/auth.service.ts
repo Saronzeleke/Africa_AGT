@@ -75,7 +75,7 @@ class AuthService {
    * Login user
    */
   async login(credentials: LoginRequest): Promise<User> {
-    const response = await fetch(`${config.api.baseUrl}/auth/login`, {
+    const response = await fetch(`${config.api.baseUrl}/api/auth/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -106,7 +106,7 @@ class AuthService {
    * Signup new user
    */
   async signup(data: SignupRequest): Promise<SignupResponse> {
-    const response = await fetch(`${config.api.baseUrl}/auth/register`, {
+    const response = await fetch(`${config.api.baseUrl}/api/auth/register`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -128,7 +128,7 @@ class AuthService {
   async forgotPassword(
     data: ForgotPasswordRequest
   ): Promise<ForgotPasswordResponse> {
-    const response = await fetch(`${config.api.baseUrl}/auth/forgot-password`, {
+    const response = await fetch(`${config.api.baseUrl}/api/auth/forgot-password`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -150,7 +150,7 @@ class AuthService {
   async resetPassword(
     data: ResetPasswordRequest
   ): Promise<ResetPasswordResponse> {
-    const response = await fetch(`${config.api.baseUrl}/auth/reset-password`, {
+    const response = await fetch(`${config.api.baseUrl}/api/auth/reset-password`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -170,7 +170,7 @@ class AuthService {
    * Verify email with token
    */
   async verifyEmail(data: VerifyEmailRequest): Promise<VerifyEmailResponse> {
-    const response = await fetch(`${config.api.baseUrl}/auth/verify-email`, {
+    const response = await fetch(`${config.api.baseUrl}/api/auth/verify-email`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -202,7 +202,7 @@ class AuthService {
       throw new Error('Not authenticated');
     }
 
-    const response = await fetch(`${config.api.baseUrl}/auth/me`, {
+    const response = await fetch(`${config.api.baseUrl}/api/auth/me`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -232,10 +232,12 @@ class AuthService {
    * Store authentication data
    */
   private storeAuthData(response: LoginResponse): void {
-    // Store token as plain string to avoid JWT corruption
-    setTokenToStorage(config.auth.tokenKey, response.access_token);
+    // Store token in localStorage
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(config.auth.tokenKey, response.access_token);
+    }
     
-    // Store user data as JSON
+    // Store user data
     setToStorage(config.auth.userKey, {
       id: response.user.id,
       name: response.user.name,
@@ -243,7 +245,7 @@ class AuthService {
       role: response.user.role,
     });
     
-    // Set cookie for middleware (client-side only)
+    // Set cookie for middleware
     if (typeof document !== 'undefined') {
       document.cookie = `afyametrix_token=${response.access_token}; path=/; max-age=${24 * 60 * 60}; SameSite=Lax`;
     }
@@ -253,22 +255,29 @@ class AuthService {
    * Get stored token
    */
   private getStoredToken(): string | null {
-    return getTokenFromStorage(config.auth.tokenKey);
+    if (typeof window === 'undefined') return null;
+    
+    try {
+      return window.localStorage.getItem(config.auth.tokenKey);
+    } catch (error) {
+      console.error(`Error reading token from localStorage:`, error);
+      return null;
+    }
   }
 
   /**
    * Clear authentication data
    */
   private clearAuthData(): void {
-    // Remove token directly using utility
+    // Remove token
     if (typeof window !== 'undefined') {
       localStorage.removeItem(config.auth.tokenKey);
     }
     
-    // Remove user data using utility
+    // Remove user data
     removeFromStorage(config.auth.userKey);
     
-    // Clear cookie (client-side only)
+    // Clear cookie
     if (typeof document !== 'undefined') {
       document.cookie = 'afyametrix_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
     }
@@ -278,8 +287,14 @@ class AuthService {
    * Check if user is authenticated
    */
   isAuthenticated(): boolean {
-    const token = getTokenFromStorage(config.auth.tokenKey);
-    return !!token && token !== 'null' && token !== 'undefined';
+    if (typeof window === 'undefined') return false;
+    
+    try {
+      const token = window.localStorage.getItem(config.auth.tokenKey);
+      return !!token && token !== 'null' && token !== 'undefined';
+    } catch (error) {
+      return false;
+    }
   }
 
   /**

@@ -29,19 +29,22 @@ export interface TrendsDataParams {
   endDate: string;
   diseaseType?: string;
   location?: string;
+  country?: string;
+  region?: string;
+}
+
+export interface ForecastData {
+  country: string;
+  region: string;
+  disease: string;
+  forecast_avg_daily_cases: number;
+  trend_direction: "Increasing" | "Decreasing" | "Stable";
+  model_confidence_pct: number;
 }
 
 export interface TrendsDataResponse {
-  trends: Array<{
-    date: string;
-    count: number;
-    disease: string;
-  }>;
-  forecast?: Array<{
-    date: string;
-    predicted: number;
-    confidence: number;
-  }>;
+  total: number;
+  forecasts: ForecastData[];
 }
 
 export interface HeatmapDataParams {
@@ -51,12 +54,17 @@ export interface HeatmapDataParams {
 }
 
 export interface HeatmapDataResponse {
-  locations: Array<{
-    latitude: number;
-    longitude: number;
-    count: number;
-    location: string;
-    disease: string;
+  regions: Array<{
+    id?: number;
+    name?: string;
+    region_name?: string;
+    latitude?: number;
+    longitude?: number;
+    risk_score?: number;
+    population?: number;
+    cases?: number;
+    risk_level?: string;
+    [key: string]: any; // Allow additional properties from API response
   }>;
 }
 
@@ -77,7 +85,7 @@ class DashboardService {
    * Get dashboard data
    */
   async getDashboardData(): Promise<DashboardDataResponse> {
-    return apiClient.get<DashboardDataResponse>("/dashboard", {
+    return apiClient.get<DashboardDataResponse>("/api/health-intelligence/dashboard", {
       requiresAuth: true,
     });
   }
@@ -86,68 +94,43 @@ class DashboardService {
    * Get dashboard statistics
    */
   async getStats(): Promise<DashboardStats> {
-    try {
-      return await apiClient.get<DashboardStats>("/dashboard/stats", {
-        requiresAuth: true,
-      });
-    } catch (error) {
-      console.warn('Dashboard stats API not available:', error);
-      // Return default stats when API is not ready
-      return {
-        todayCases: 0,
-        weekCases: 0,
-        monthCases: 0,
-        pendingReports: 0,
-        activeFacilities: 0,
-        completionRate: 0,
-      } as DashboardStats;
-    }
+    return apiClient.get<DashboardStats>("/api/health-intelligence/dashboard", {
+      requiresAuth: true,
+    });
   }
 
   /**
    * Get disease breakdown
    */
   async getDiseaseBreakdown(): Promise<DiseaseStats[]> {
-    try {
-      return await apiClient.get<DiseaseStats[]>("/dashboard/diseases", {
-        requiresAuth: true,
-      });
-    } catch (error) {
-      console.warn('Disease breakdown API not available:', error);
-      return [];
-    }
+    const response = await apiClient.get<DiseaseStats[]>("/api/health-intelligence/diseases", {
+      requiresAuth: true,
+    });
+    return Array.isArray(response) ? response : [];
   }
 
   /**
    * Get recent case entries
    */
   async getRecentEntries(limit: number = 10): Promise<CaseEntry[]> {
-    try {
-      return await apiClient.get<CaseEntry[]>(
-        `/dashboard/recent?limit=${limit}`,
-        {
-          requiresAuth: true,
-        }
-      );
-    } catch (error) {
-      console.warn('Recent entries API not available:', error);
-      return [];
-    }
+    const response = await apiClient.get<CaseEntry[]>(
+      `/api/health-intelligence/recent?limit=${limit}`,
+      {
+        requiresAuth: true,
+      }
+    );
+    return Array.isArray(response) ? response : [];
   }
 
   /**
-   * Get alerts
+   * Get alerts from health-intelligence
    */
   async getAlerts(unreadOnly: boolean = false): Promise<Alert[]> {
-    try {
-      const endpoint = `/dashboard/alerts${
-        unreadOnly ? "?unreadOnly=true" : ""
-      }`;
-      return await apiClient.get<Alert[]>(endpoint, { requiresAuth: true });
-    } catch (error) {
-      console.warn('Alerts API not available:', error);
-      return [];
-    }
+    const endpoint = `/api/health-intelligence/alerts${
+      unreadOnly ? "?unreadOnly=true" : ""
+    }`;
+    const response = await apiClient.get<Alert[]>(endpoint, { requiresAuth: true });
+    return Array.isArray(response) ? response : [];
   }
 
   /**
@@ -198,57 +181,112 @@ class DashboardService {
   }
 
   /**
-   * Get trends data
+   * Get forecasts data from health-intelligence
    */
-  async getTrends(params: TrendsDataParams): Promise<TrendsDataResponse> {
-    const queryParams = new URLSearchParams({
-      startDate: params.startDate,
-      endDate: params.endDate,
-      ...(params.diseaseType && { diseaseType: params.diseaseType }),
-      ...(params.location && { location: params.location }),
+  async getForecasts(params?: TrendsDataParams): Promise<TrendsDataResponse> {
+    const queryParams = new URLSearchParams();
+
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined) {
+          queryParams.append(key, String(value));
+        }
+      });
+    }
+
+    const endpoint = `/api/health-intelligence/forecasts${
+      queryParams.toString() ? `?${queryParams.toString()}` : ""
+    }`;
+
+    const response = await apiClient.get<TrendsDataResponse>(endpoint, { 
+      requiresAuth: true 
     });
 
-    return apiClient.get<TrendsDataResponse>(
-      `/dashboard/trends?${queryParams.toString()}`,
-      { requiresAuth: true }
-    );
+    return {
+      total: response.total || 0,
+      forecasts: Array.isArray(response.forecasts) ? response.forecasts : []
+    };
   }
 
   /**
-   * Get heatmap data
+   * Get heatmap data from health-intelligence/risk-scores endpoint
    */
   async getHeatmapData(
     params?: HeatmapDataParams
   ): Promise<HeatmapDataResponse> {
-    const queryParams = new URLSearchParams();
-
-    if (params?.diseaseType) {
-      queryParams.append("diseaseType", params.diseaseType);
-    }
-    if (params?.startDate) {
-      queryParams.append("startDate", params.startDate);
-    }
-    if (params?.endDate) {
-      queryParams.append("endDate", params.endDate);
-    }
-
-    const endpoint = `/dashboard/heatmap${
-      queryParams.toString() ? `?${queryParams.toString()}` : ""
-    }`;
-
-    return apiClient.get<HeatmapDataResponse>(endpoint, {
+    const response = await apiClient.get<any>("/api/health-intelligence/risk-scores", {
       requiresAuth: true,
     });
+    
+    // Handle multiple possible response structures from API
+    let regions = [];
+    
+    if (response && Array.isArray(response)) {
+      // Direct array response
+      regions = response;
+    } else if (response && response.regions && Array.isArray(response.regions)) {
+      // Wrapped in regions property
+      regions = response.regions;
+    } else if (response && response.data && Array.isArray(response.data)) {
+      // Wrapped in data property
+      regions = response.data;
+    } else if (response && typeof response === 'object') {
+      // Find first array property
+      const arrayKey = Object.keys(response).find(key => Array.isArray(response[key]));
+      if (arrayKey) {
+        regions = response[arrayKey];
+      }
+    }
+    
+    // Return in expected format
+    return { regions };
   }
 
   /**
-   * Get AI recommendations
+   * Get AI narrative recommendations from health-intelligence
+   */
+  async getNarrative(params?: { country?: string; region?: string }): Promise<any> {
+    const queryParams = new URLSearchParams();
+    if (params?.country) queryParams.append('country', params.country);
+    if (params?.region) queryParams.append('region', params.region);
+    
+    const endpoint = `/api/health-intelligence/narrative${
+      queryParams.toString() ? `?${queryParams.toString()}` : ""
+    }`;
+    
+    return await apiClient.get(endpoint, { requiresAuth: true });
+  }
+
+  /**
+   * Get resource allocations from health-intelligence
+   */
+  async getResourceAllocations(): Promise<any> {
+    const response = await apiClient.get("/api/health-intelligence/allocations", {
+      requiresAuth: true,
+    }) as any;
+    return {
+      total: response?.total || 0,
+      allocations: Array.isArray(response?.allocations) ? response.allocations : []
+    };
+  }
+
+  /**
+   * Get cluster data from health-intelligence
+   */
+  async getClusters(): Promise<any> {
+    const response = await apiClient.get("/api/health-intelligence/clusters", {
+      requiresAuth: true,
+    }) as any;
+    return {
+      clusters: Array.isArray(response?.clusters) ? response.clusters : []
+    };
+  }
+
+  /**
+   * Get AI recommendations from health-intelligence (legacy method)
    */
   async getRecommendations(): Promise<RecommendationsResponse> {
-    return apiClient.get<RecommendationsResponse>(
-      "/dashboard/recommendations",
-      { requiresAuth: true }
-    );
+    return this.getNarrative();
   }
 
   /**

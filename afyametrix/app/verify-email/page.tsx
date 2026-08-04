@@ -61,7 +61,7 @@ function VerifyEmailContent() {
 
     try {
       // Call backend API to resend verification email  
-      const response = await fetch('http://localhost:8000/api/auth/forgot-password', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000'}/api/auth/forgot-password`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

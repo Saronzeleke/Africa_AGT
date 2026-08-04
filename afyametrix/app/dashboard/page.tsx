@@ -31,9 +31,10 @@ interface DiseaseData {
 
 export default function DashboardPage() {
   const router = useRouter();
-  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [isOnline, setIsOnline] = useState(typeof navigator !== 'undefined' ? navigator.onLine : true);
   const [isSyncing, setIsSyncing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [stats, setStats] = useState<DashboardStats>({
     todayCases: 0,
     weekCases: 0,
@@ -53,9 +54,64 @@ export default function DashboardPage() {
   const loadDashboardData = useCallback(async () => {
     try {
       setIsLoading(true);
+      setError(null);
 
-      // Load dashboard statistics
-      const dashboardStats = await dashboardService.getStats();
+      // Use parallel requests for better performance
+      const [dashboardStats, diseases, entries, alertsData] = await Promise.all([
+        fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000'}/api/health-intelligence/dashboard`, {
+          headers: {
+            'Authorization': `Bearer ${typeof document !== 'undefined' ? document.cookie.match(/afyametrix_token=([^;]+)/)?.[1] || '' : ''}`,
+            'Content-Type': 'application/json',
+          },
+        }).then(res => {
+          if (res.status === 401) {
+            router.push('/login');
+            throw new Error('Authentication required');
+          }
+          if (!res.ok) throw new Error('Failed to load stats');
+          return res.json();
+        }),
+        fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000'}/api/health-intelligence/diseases`, {
+          headers: {
+            'Authorization': `Bearer ${typeof document !== 'undefined' ? document.cookie.match(/afyametrix_token=([^;]+)/)?.[1] || '' : ''}`,
+            'Content-Type': 'application/json',
+          },
+        }).then(res => {
+          if (res.status === 401) {
+            router.push('/login');
+            throw new Error('Authentication required');
+          }
+          if (!res.ok) throw new Error('Failed to load diseases');
+          return res.json();
+        }),
+        fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000'}/api/health-intelligence/recent?limit=10`, {
+          headers: {
+            'Authorization': `Bearer ${typeof document !== 'undefined' ? document.cookie.match(/afyametrix_token=([^;]+)/)?.[1] || '' : ''}`,
+            'Content-Type': 'application/json',
+          },
+        }).then(res => {
+          if (res.status === 401) {
+            router.push('/login');
+            throw new Error('Authentication required');
+          }
+          if (!res.ok) throw new Error('Failed to load entries');
+          return res.json();
+        }),
+        fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000'}/api/health-intelligence/alerts`, {
+          headers: {
+            'Authorization': `Bearer ${typeof document !== 'undefined' ? document.cookie.match(/afyametrix_token=([^;]+)/)?.[1] || '' : ''}`,
+            'Content-Type': 'application/json',
+          },
+        }).then(res => {
+          if (res.status === 401) {
+            router.push('/login');
+            throw new Error('Authentication required');
+          }
+          if (!res.ok) throw new Error('Failed to load alerts');
+          return res.json();
+        }).catch(() => []) // Alerts are optional
+      ]);
+
       setStats({
         todayCases: dashboardStats.todayCases || 0,
         weekCases: dashboardStats.weekCases || 0,
@@ -67,21 +123,14 @@ export default function DashboardPage() {
         } : undefined,
       });
 
-      // Load disease breakdown
-      const diseases = await dashboardService.getDiseaseBreakdown();
-      setDiseaseData(diseases.map((d: any, index: number) => ({
+      setDiseaseData(Array.isArray(diseases) ? diseases.map((d: any, index: number) => ({
         name: d.name,
         count: d.count,
         color: getColor(index),
-      })));
+      })) : []);
 
-      // Load recent entries
-      const entries = await dashboardService.getRecentEntries();
-      setRecentEntries(entries);
-
-      // Load alerts
-      const alertsData = await dashboardService.getAlerts();
-      setAlerts(alertsData);
+      setRecentEntries(Array.isArray(entries) ? entries : []);
+      setAlerts(Array.isArray(alertsData) ? alertsData : []);
 
       // Get last sync time from localStorage
       const lastSyncTime = localStorage.getItem(config.storage.lastSyncKey);
@@ -92,23 +141,14 @@ export default function DashboardPage() {
       } else {
         setLastSync("Never");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to load dashboard data:', error);
-      
-      // Fallback to show empty state instead of mock data
-      setStats({
-        todayCases: 0,
-        weekCases: 0,
-        monthCases: 0,
-        pendingReports: 0,
-      });
-      setDiseaseData([]);
-      setRecentEntries([]);
-      setAlerts([]);
+      setError(error.message || 'Failed to load dashboard data. Please try again.');
+      // Don't throw - handle gracefully with error state
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [router]);
 
   // Load dashboard data
   useEffect(() => {
@@ -230,7 +270,7 @@ export default function DashboardPage() {
       )}
 
       {/* Alerts */}
-      {alerts.map((alert) => (
+      {Array.isArray(alerts) && alerts.length > 0 && alerts.map((alert) => (
         <Card key={alert.id} className="bg-orange-50 border-orange-200 p-6">
           <div className="flex gap-4">
             <div className="flex-shrink-0">

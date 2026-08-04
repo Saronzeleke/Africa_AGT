@@ -129,21 +129,33 @@ class CaseService {
    * Get all case entries with filters
    */
   async getCases(params?: GetCasesParams): Promise<GetCasesResponse> {
-    const queryParams = new URLSearchParams();
+    try {
+      const queryParams = new URLSearchParams();
 
-    if (params) {
-      Object.entries(params).forEach(([key, value]) => {
-        if (value !== undefined) {
-          queryParams.append(key, String(value));
-        }
-      });
+      if (params) {
+        Object.entries(params).forEach(([key, value]) => {
+          if (value !== undefined) {
+            queryParams.append(key, String(value));
+          }
+        });
+      }
+
+      const endpoint = `/cases${
+        queryParams.toString() ? `?${queryParams.toString()}` : ""
+      }`;
+
+      return await apiClient.get<GetCasesResponse>(endpoint, { requiresAuth: true });
+    } catch (error) {
+      console.warn('Cases API not available:', error);
+      // Return empty response when API fails
+      return {
+        cases: [],
+        total: 0,
+        page: 1,
+        limit: 10,
+        totalPages: 0,
+      };
     }
-
-    const endpoint = `/cases${
-      queryParams.toString() ? `?${queryParams.toString()}` : ""
-    }`;
-
-    return apiClient.get<GetCasesResponse>(endpoint, { requiresAuth: true });
   }
 
   /**

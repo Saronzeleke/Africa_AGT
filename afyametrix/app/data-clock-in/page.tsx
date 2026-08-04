@@ -16,25 +16,34 @@ export default function DataClockInPage() {
   const router = useRouter();
   const { user } = useAuth();
   const [filter, setFilter] = useState<"all" | "pending" | "synced">("all");
-  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [isOnline, setIsOnline] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [entries, setEntries] = useState<CaseEntry[]>([]);
   const [drafts, setDrafts] = useState<DraftEntry[]>([]);
   const [lastSync, setLastSync] = useState("Never");
 
   useEffect(() => {
+    // Set initial online status safely
+    if (typeof navigator !== 'undefined') {
+      setIsOnline(navigator.onLine);
+    }
+    
     loadData();
 
     // Set up online/offline listeners
     const handleOnline = () => setIsOnline(true);
     const handleOffline = () => setIsOnline(false);
 
-    window.addEventListener("online", handleOnline);
-    window.addEventListener("offline", handleOffline);
+    if (typeof window !== 'undefined') {
+      window.addEventListener("online", handleOnline);
+      window.addEventListener("offline", handleOffline);
+    }
 
     return () => {
-      window.removeEventListener("online", handleOnline);
-      window.removeEventListener("offline", handleOffline);
+      if (typeof window !== 'undefined') {
+        window.removeEventListener("online", handleOnline);
+        window.removeEventListener("offline", handleOffline);
+      }
     };
   }, []);
 
@@ -67,12 +76,15 @@ export default function DataClockInPage() {
     }
   };
 
-  const filteredEntries =
-    filter === "all"
-      ? entries
-      : entries.filter((entry) => entry.status === filter);
+  const filteredEntries = Array.isArray(entries)
+    ? (filter === "all"
+        ? entries
+        : entries.filter((entry) => entry.status === filter))
+    : [];
 
-  const pendingCount = entries.filter(entry => entry.status === 'pending').length;
+  const pendingCount = Array.isArray(entries) 
+    ? entries.filter(entry => entry.status === 'pending').length 
+    : 0;
 
   const handleNewEntry = () => {
     router.push("/data-clock-in/new");
@@ -136,7 +148,7 @@ export default function DataClockInPage() {
                 onClick={() => setFilter("all")}
                 className="rounded-full"
               >
-                All ({entries.length})
+                All ({Array.isArray(entries) ? entries.length : 0})
               </Button>
               <Button
                 variant={filter === "pending" ? "default" : "outline"}
@@ -144,7 +156,7 @@ export default function DataClockInPage() {
                 onClick={() => setFilter("pending")}
                 className="rounded-full"
               >
-                Pending ({entries.filter(e => e.status === 'pending').length})
+                Pending ({Array.isArray(entries) ? entries.filter(e => e.status === 'pending').length : 0})
               </Button>
               <Button
                 variant={filter === "synced" ? "default" : "outline"}
@@ -152,7 +164,7 @@ export default function DataClockInPage() {
                 onClick={() => setFilter("synced")}
                 className="rounded-full"
               >
-                Synced ({entries.filter(e => e.status === 'synced').length})
+                Synced ({Array.isArray(entries) ? entries.filter(e => e.status === 'synced').length : 0})
               </Button>
             </div>
           </div>

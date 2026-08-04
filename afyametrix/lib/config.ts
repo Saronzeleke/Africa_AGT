@@ -42,7 +42,7 @@ export const config = {
     offlineMode: true,
     photosEnabled: true,
     aiRecommendations: false, // Feature flag
-    heatmapEnabled: false, // Feature flag
+    heatmapEnabled: true, // Feature flag - ENABLED
     exportEnabled: false, // Feature flag
   },
 } as const;

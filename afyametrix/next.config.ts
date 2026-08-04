@@ -4,11 +4,11 @@ const nextConfig: NextConfig = {
   // Production optimizations
   reactStrictMode: true,
   
-  // Enable static export for Netlify
-  output: 'export',
-  trailingSlash: true,
+  // Removed static export for middleware support
+  // output: 'export', // This breaks middleware
+  // trailingSlash: true,
   
-  // Image optimization for static export
+  // Image optimization
   images: {
     unoptimized: true,
   },
