@@ -49,12 +49,19 @@ export default function SettingsPage() {
     loadNotificationSettings();
   }, [user]);
 
+  // Helper function to get token from cookie
+  const getTokenFromCookie = () => {
+    const cookies = document.cookie.split(';');
+    const tokenCookie = cookies.find(cookie => cookie.trim().startsWith('afyametrix_token='));
+    return tokenCookie ? tokenCookie.split('=')[1] : null;
+  };
+
   const loadNotificationSettings = async () => {
     try {
-      const token = localStorage.getItem(config.auth.tokenKey);
+      const token = getTokenFromCookie();
       if (!token) return;
 
-      const response = await fetch(`${config.api.baseUrl}/user/notification-settings`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000'}/api/user/notification-settings`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -75,10 +82,10 @@ export default function SettingsPage() {
     setMessage("");
 
     try {
-      const token = localStorage.getItem(config.auth.tokenKey);
+      const token = getTokenFromCookie();
       if (!token) throw new Error('Not authenticated');
 
-      const response = await fetch(`${config.api.baseUrl}/user/profile`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000'}/api/user/profile`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -115,10 +122,10 @@ export default function SettingsPage() {
     }
 
     try {
-      const token = localStorage.getItem(config.auth.tokenKey);
+      const token = getTokenFromCookie();
       if (!token) throw new Error('Not authenticated');
 
-      const response = await fetch(`${config.api.baseUrl}/user/change-password`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000'}/api/user/change-password`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -150,10 +157,10 @@ export default function SettingsPage() {
 
   const updateNotificationSettings = async (newSettings: typeof notificationSettings) => {
     try {
-      const token = localStorage.getItem(config.auth.tokenKey);
+      const token = getTokenFromCookie();
       if (!token) throw new Error('Not authenticated');
 
-      const response = await fetch(`${config.api.baseUrl}/user/notification-settings`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000'}/api/user/notification-settings`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

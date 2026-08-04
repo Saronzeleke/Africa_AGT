@@ -36,12 +36,23 @@ function VerifyEmailContent() {
     setIsVerifying(true);
     setErrorMessage("");
 
-    // Call backend API using auth service
     try {
-      await authService.verifyEmail({
-        email: email,
-        code: verificationCode,
+      // CRITICAL: Use real backend API call (not auth service)
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000'}/api/auth/verify-email`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: email,
+          code: verificationCode,
+        }),
       });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.detail || 'Verification failed');
+      }
       
       setVerificationStatus("success");
       setTimeout(() => {
@@ -60,8 +71,8 @@ function VerifyEmailContent() {
     if (resendCooldown > 0) return;
 
     try {
-      // Call backend API to resend verification email  
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000'}/api/auth/forgot-password`, {
+      // CRITICAL: Fixed endpoint - was calling /forgot-password instead of /resend-verification
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000'}/api/auth/resend-verification`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -73,10 +84,15 @@ function VerifyEmailContent() {
 
       if (response.ok) {
         setResendCooldown(60);
-        alert("Verification code resent! Check your email.");
+        alert("Verification code resent! Check your email (or check spam folder).");
       } else {
         const errorData = await response.json();
-        alert(`Failed to resend code: ${errorData.detail || 'Please try again later.'}`);
+        // Show user-friendly message about email service issues
+        if (response.status === 500) {
+          alert("Email service temporarily unavailable. Please try again in a few minutes or contact support.");
+        } else {
+          alert(`Failed to resend code: ${errorData.detail || 'Please try again later.'}`);
+        }
       }
     } catch (error) {
       console.error('Resend error:', error);

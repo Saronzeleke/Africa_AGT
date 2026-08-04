@@ -52,65 +52,82 @@ export default function DashboardPage() {
   };
 
   const loadDashboardData = useCallback(async () => {
+    console.log('🔄 Loading dashboard data...');
     try {
       setIsLoading(true);
       setError(null);
+
+      const token = typeof document !== 'undefined' ? document.cookie.match(/afyametrix_token=([^;]+)/)?.[1] || '' : '';
+      console.log('🍪 Token found:', !!token);
 
       // Use parallel requests for better performance
       const [dashboardStats, diseases, entries, alertsData] = await Promise.all([
         fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000'}/api/health-intelligence/dashboard`, {
           headers: {
-            'Authorization': `Bearer ${typeof document !== 'undefined' ? document.cookie.match(/afyametrix_token=([^;]+)/)?.[1] || '' : ''}`,
+            'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
           },
         }).then(res => {
+          console.log('📊 Dashboard stats response:', res.status);
           if (res.status === 401) {
             router.push('/login');
             throw new Error('Authentication required');
           }
-          if (!res.ok) throw new Error('Failed to load stats');
+          if (!res.ok) throw new Error(`Dashboard API failed: ${res.status}`);
           return res.json();
         }),
         fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000'}/api/health-intelligence/diseases`, {
           headers: {
-            'Authorization': `Bearer ${typeof document !== 'undefined' ? document.cookie.match(/afyametrix_token=([^;]+)/)?.[1] || '' : ''}`,
+            'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
           },
         }).then(res => {
+          console.log('🦠 Diseases response:', res.status);
           if (res.status === 401) {
             router.push('/login');
             throw new Error('Authentication required');
           }
-          if (!res.ok) throw new Error('Failed to load diseases');
+          if (!res.ok) throw new Error(`Diseases API failed: ${res.status}`);
           return res.json();
         }),
         fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000'}/api/health-intelligence/recent?limit=10`, {
           headers: {
-            'Authorization': `Bearer ${typeof document !== 'undefined' ? document.cookie.match(/afyametrix_token=([^;]+)/)?.[1] || '' : ''}`,
+            'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
           },
         }).then(res => {
+          console.log('📋 Recent entries response:', res.status);
           if (res.status === 401) {
             router.push('/login');
             throw new Error('Authentication required');
           }
-          if (!res.ok) throw new Error('Failed to load entries');
+          if (!res.ok) throw new Error(`Recent API failed: ${res.status}`);
           return res.json();
         }),
         fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000'}/api/health-intelligence/alerts`, {
           headers: {
-            'Authorization': `Bearer ${typeof document !== 'undefined' ? document.cookie.match(/afyametrix_token=([^;]+)/)?.[1] || '' : ''}`,
+            'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
           },
         }).then(res => {
+          console.log('🚨 Alerts response:', res.status);
           if (res.status === 401) {
             router.push('/login');
             throw new Error('Authentication required');
           }
-          if (!res.ok) throw new Error('Failed to load alerts');
+          if (!res.ok) throw new Error(`Alerts API failed: ${res.status}`);
           return res.json();
-        }).catch(() => []) // Alerts are optional
+        }).catch((err) => {
+          console.log('⚠️ Alerts failed (optional):', err.message);
+          return []; // Alerts are optional
+        })
       ]);
+
+      console.log('✅ Dashboard data loaded successfully');
+      console.log('📊 Stats:', dashboardStats);
+      console.log('🦠 Diseases:', diseases);
+      console.log('📋 Entries:', entries);
+      console.log('🚨 Alerts:', alertsData);
 
       setStats({
         todayCases: dashboardStats.todayCases || 0,

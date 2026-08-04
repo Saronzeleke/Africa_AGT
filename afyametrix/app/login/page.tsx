@@ -8,7 +8,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Link from "next/link";
-import { authService } from "@/lib/api/services/auth.service";
 import { UserRole } from "@/types";
 
 export default function LoginPage() {
@@ -24,9 +23,14 @@ export default function LoginPage() {
     setIsLoading(true);
     setError("");
     
+    console.log('🔐 LOGIN ATTEMPT:', { email, role });
+    
     try {
-      // Use unified API client
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000'}/api/auth/login`, {
+      const apiUrl = `${process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000'}/api/auth/login`;
+      console.log('🌐 API URL:', apiUrl);
+      
+      // CRITICAL: Use real backend API call (not auth service)
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -37,33 +41,62 @@ export default function LoginPage() {
         }),
       });
 
+      console.log('📡 API RESPONSE:', {
+        status: response.status,
+        statusText: response.statusText,
+        ok: response.ok
+      });
+
       if (!response.ok) {
         const error = await response.json();
+        console.error('❌ LOGIN API ERROR:', error);
         throw new Error(error.detail || 'Login failed');
       }
 
       const data = await response.json();
+      console.log('✅ LOGIN SUCCESS DATA:', {
+        hasAccessToken: !!data.access_token,
+        tokenLength: data.access_token?.length,
+        dataKeys: Object.keys(data)
+      });
       
-      // Store token and user in cookies (SSR compatible)
-      if (typeof document !== 'undefined') {
-        const isSecure = window.location.protocol === 'https:';
-        const secureFlag = isSecure ? 'secure; ' : '';
-        document.cookie = `afyametrix_token=${data.access_token}; path=/; ${secureFlag}samesite=strict; max-age=86400`;
-        document.cookie = `afyametrix_user=${encodeURIComponent(JSON.stringify(data.user))}; path=/; ${secureFlag}samesite=strict; max-age=86400`;
+      // CRITICAL: Check if we have access_token
+      if (data.access_token) {
+        // CRITICAL: Store token in cookie - REMOVE secure flag for localhost
+        const isProduction = process.env.NODE_ENV === 'production';
+        const cookieFlags = isProduction 
+          ? 'path=/; secure; samesite=strict; max-age=86400'
+          : 'path=/; samesite=strict; max-age=86400';
+        
+        const cookieString = `afyametrix_token=${data.access_token}; ${cookieFlags}`;
+        console.log('🍪 SETTING COOKIE:', {
+          isProduction,
+          cookieFlags,
+          tokenPreview: data.access_token.substring(0, 20) + '...'
+        });
+        
+        document.cookie = cookieString;
+        
+        // Verify cookie was set
+        const cookieSet = document.cookie.includes('afyametrix_token');
+        console.log('🍪 COOKIE VERIFICATION:', {
+          cookieSet,
+          allCookies: document.cookie
+        });
+        
+        console.log('🔄 REDIRECTING TO DASHBOARD...');
+        // CRITICAL: Force redirect to dashboard
+        window.location.href = '/dashboard';
+      } else {
+        console.error('❌ NO ACCESS TOKEN IN RESPONSE');
+        throw new Error('No access token received');
       }
-
-      // Get redirect URL from query params or default to dashboard
-      const searchParams = new URLSearchParams(window.location.search);
-      const redirectTo = searchParams.get('redirect') || '/dashboard';
-      
-      // Use window.location for immediate redirect
-      window.location.href = redirectTo;
     } catch (error: any) {
-      console.error('Login failed:', error);
+      console.error('💥 LOGIN FAILED:', error);
       setError(error.message || 'Invalid credentials. Please check your email and password.');
-    } finally {
       setIsLoading(false);
     }
+    // Don't set loading false on success - we're redirecting
   };
 
   return (

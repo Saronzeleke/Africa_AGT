@@ -8,7 +8,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Link from "next/link";
-import { authService } from "@/lib/api/services/auth.service";
 import { UserRole } from "@/types";
 import { AlertCircle, CheckCircle } from "lucide-react";
 
@@ -86,14 +85,26 @@ export default function SignupPage() {
     setIsSubmitting(true);
 
     try {
-      // Use real auth service with updated interface
-      await authService.signup({
-        name: formData.fullName,
-        email: formData.email,
-        password: formData.password,
-        role: role as UserRole,
+      // CRITICAL: Use real backend API call (not auth service)
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000'}/api/auth/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: formData.fullName,
+          email: formData.email,
+          password: formData.password,
+          role: role as UserRole,
+        }),
       });
 
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.detail || 'Registration failed');
+      }
+
+      // Registration successful
       setShowSuccess(true);
       // Redirect to verification page after 3 seconds
       setTimeout(() => {

@@ -45,7 +45,7 @@ export default function NotificationsPage() {
       const token = localStorage.getItem(config.auth.tokenKey);
       if (!token) return;
 
-      const response = await fetch(`${config.api.baseUrl}/notifications`, {
+      const response = await fetch(`${config.api.baseUrl}/api/notifications`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -84,7 +84,7 @@ export default function NotificationsPage() {
       const token = localStorage.getItem(config.auth.tokenKey);
       if (!token) return;
 
-      const response = await fetch(`${config.api.baseUrl}/notifications/${id}/read`, {
+      const response = await fetch(`${config.api.baseUrl}/api/notifications/${id}/read`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -110,7 +110,7 @@ export default function NotificationsPage() {
       const token = localStorage.getItem(config.auth.tokenKey);
       if (!token) return;
 
-      const response = await fetch(`${config.api.baseUrl}/notifications/mark-all-read`, {
+      const response = await fetch(`${config.api.baseUrl}/api/notifications/mark-all-read`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -132,7 +132,7 @@ export default function NotificationsPage() {
       const token = localStorage.getItem(config.auth.tokenKey);
       if (!token) return;
 
-      const response = await fetch(`${config.api.baseUrl}/notifications/${id}`, {
+      const response = await fetch(`${config.api.baseUrl}/api/notifications/${id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
