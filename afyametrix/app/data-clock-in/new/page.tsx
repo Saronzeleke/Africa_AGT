@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ArrowLeft, Plus, Trash2, Upload, X, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { DATA_ENTRY_DISEASES } from "../../../lib/constants/diseases.js";
+import { DATA_ENTRY_DISEASES } from "@/lib/constants/diseases";
 
 
 

@@ -5,7 +5,7 @@ import {
   FORECAST_DISEASES, 
   getDiseasesForContext,
   hasForecastData 
-} from "../../lib/constants/diseases.js";
+} from "@/lib/constants/diseases";
 
 interface DiseaseFilterProps {
   value: string;
