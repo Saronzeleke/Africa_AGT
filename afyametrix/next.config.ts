@@ -4,10 +4,6 @@ const nextConfig: NextConfig = {
   // Production optimizations
   reactStrictMode: true,
   
-  // Removed static export for middleware support
-  // output: 'export', // This breaks middleware
-  // trailingSlash: true,
-  
   // Image optimization
   images: {
     unoptimized: true,
@@ -18,6 +14,14 @@ const nextConfig: NextConfig = {
   
   // Disable telemetry
   productionBrowserSourceMaps: false,
+  
+  // Netlify deployment configuration
+  trailingSlash: false,
+  
+  // Ensure proper build output for Netlify
+  experimental: {
+    serverComponentsExternalPackages: ['sharp']
+  },
 };
 
 export default nextConfig;

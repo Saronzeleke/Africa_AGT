@@ -6,5 +6,8 @@
   NODE_VERSION = "18"
   NPM_VERSION = "9"
 
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
 [functions]
   external_node_modules = ["sharp"]
