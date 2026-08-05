@@ -1,11 +1,43 @@
 "use client";
 
-import { 
-  ALL_DISEASES, 
-  FORECAST_DISEASES, 
-  getDiseasesForContext,
-  hasForecastData 
-} from "../../lib/constants/diseases";
+// Disease constants - inline to avoid module resolution issues
+const ALL_DISEASES = [
+  "Cholera",
+  "Meningitis", 
+  "Typhoid",
+  "Malaria",
+  "Dengue",
+  "Mpox",
+  "Malnutrition",
+  "Diarrheal Disease",
+  "Respiratory Infections",
+  "Tuberculosis"
+] as const;
+
+const FORECAST_DISEASES = [
+  "Meningitis",
+  "Cholera", 
+  "Dengue"
+] as const;
+
+function hasForecastData(disease: string): boolean {
+  return FORECAST_DISEASES.includes(disease as any);
+}
+
+function getDiseasesForContext(context: 'all' | 'forecasts' | 'alerts' | 'data-entry') {
+  switch (context) {
+    case 'all':
+      return ALL_DISEASES;
+    case 'forecasts':
+      return FORECAST_DISEASES;
+    case 'alerts':
+      return ["Cholera"];
+    case 'data-entry':
+      return [...ALL_DISEASES, "Lassa Fever", "Yellow Fever"].sort();
+    default:
+      return ALL_DISEASES;
+  }
+}
 
 interface DiseaseFilterProps {
   value: string;
