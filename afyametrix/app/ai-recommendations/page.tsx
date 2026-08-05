@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { Card } from "@/components/ui/card";
-import { BackButton } from "@/components/ui/back-button";
-import { Button } from "@/components/ui/button";
+import { Card } from "../../components/ui/card";
+import { BackButton } from "../../components/ui/back-button";
+import { Button } from "../../components/ui/button";
 import { 
   Sparkles, 
   RefreshCw, 
@@ -19,7 +19,7 @@ import {
   Clock,
   AlertCircle
 } from "lucide-react";
-import { useAIRecommendations } from "@/lib/hooks/useDashboard";
+import { useAIRecommendations } from "../../lib/hooks/useDashboard";
 
 interface FilterState {
   country: string;

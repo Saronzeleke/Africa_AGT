@@ -45,7 +45,34 @@ export default function SettingsPage() {
       });
     }
 
+    // Helper function to get token from cookie
+    const getTokenFromCookie = () => {
+      const cookies = document.cookie.split(';');
+      const tokenCookie = cookies.find(cookie => cookie.trim().startsWith('afyametrix_token='));
+      return tokenCookie ? tokenCookie.split('=')[1] : null;
+    };
+
     // Load notification settings from backend
+    const loadNotificationSettings = async () => {
+      try {
+        const token = getTokenFromCookie();
+        if (!token) return;
+
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000'}/api/user/notification-settings`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+
+        if (response.ok) {
+          const settings = await response.json();
+          setNotificationSettings(settings);
+        }
+      } catch (error) {
+        // Failed to load notification settings
+      }
+    };
+
     loadNotificationSettings();
   }, [user]);
 
@@ -72,7 +99,7 @@ export default function SettingsPage() {
         setNotificationSettings(settings);
       }
     } catch (error) {
-      // Failed to load notification settings
+      // Failed to load notification settings - removed console.log for production
     }
   };
 

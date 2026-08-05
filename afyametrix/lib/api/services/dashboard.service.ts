@@ -255,7 +255,7 @@ class DashboardService {
         queryParams.toString() ? `?${queryParams.toString()}` : ""
       }`;
       
-      const response = await apiClient.get(endpoint, { requiresAuth: true });
+      const response: any = await apiClient.get(endpoint, { requiresAuth: true });
       
       // Ensure consistent response structure for production
       return {
