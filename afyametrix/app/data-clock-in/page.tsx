@@ -104,7 +104,6 @@ export default function DataClockInPage() {
       localStorage.setItem('afyametrix_last_sync', Date.now().toString());
       await loadData();
     } catch (error) {
-      console.error('Sync failed:', error);
       alert("Sync failed. Please try again.");
     }
   };

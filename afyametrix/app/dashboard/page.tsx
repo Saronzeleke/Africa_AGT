@@ -159,7 +159,6 @@ export default function DashboardPage() {
         setLastSync("Never");
       }
     } catch (error: any) {
-      console.error('Failed to load dashboard data:', error);
       setError(error.message || 'Failed to load dashboard data. Please try again.');
       // Don't throw - handle gracefully with error state
     } finally {
@@ -198,7 +197,6 @@ export default function DashboardPage() {
       setLastSync("Just now");
       await loadDashboardData();
     } catch (error) {
-      console.error('Sync failed:', error);
       alert("Sync failed. Please try again.");
     } finally {
       setIsSyncing(false);

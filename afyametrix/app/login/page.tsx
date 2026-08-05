@@ -9,7 +9,6 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Link from "next/link";
 import { UserRole } from "@/types";
-import { logger } from "@/lib/utils/logger";
 
 export default function LoginPage() {
   const [role, setRole] = useState<"CHW" | "CHL">("CHW");
@@ -24,11 +23,8 @@ export default function LoginPage() {
     setIsLoading(true);
     setError("");
     
-    logger.log('🔐 LOGIN ATTEMPT:', { email, role });
-    
     try {
       const apiUrl = `${process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000'}/api/auth/login`;
-      logger.log('🌐 API URL:', apiUrl);
       
       // CRITICAL: Use real backend API call (not auth service)
       const response = await fetch(apiUrl, {
@@ -42,29 +38,16 @@ export default function LoginPage() {
         }),
       });
 
-      logger.log('📡 API RESPONSE:', {
-        status: response.status,
-        statusText: response.statusText,
-        ok: response.ok
-      });
-
       if (!response.ok) {
         const error = await response.json();
-        logger.error('❌ LOGIN API ERROR:', error);
         throw new Error(error.detail || 'Login failed');
       }
 
       const data = await response.json();
-      logger.log('✅ LOGIN SUCCESS DATA:', {
-        hasAccessToken: !!data.access_token,
-        tokenLength: data.access_token?.length,
-        dataKeys: Object.keys(data)
-      });
       
       // CRITICAL: Check if we have access_token
       if (data.access_token) {
         // CRITICAL: Store token in localStorage AND cookie for persistence
-        logger.log('💾 STORING TOKEN IN MULTIPLE LOCATIONS...');
         
         // Store in localStorage (for API calls)
         localStorage.setItem('afyametrix_token', data.access_token);
@@ -76,11 +59,6 @@ export default function LoginPage() {
           : 'path=/; samesite=lax; max-age=86400'; // Changed to lax for localhost
         
         const cookieString = `afyametrix_token=${data.access_token}; ${cookieFlags}`;
-        logger.log('🍪 SETTING COOKIE:', {
-          isProduction,
-          cookieFlags,
-          tokenPreview: data.access_token.substring(0, 20) + '...'
-        });
         
         document.cookie = cookieString;
         
@@ -94,24 +72,12 @@ export default function LoginPage() {
           }));
         }
         
-        // Verify storage worked
-        const tokenStored = localStorage.getItem('afyametrix_token');
-        const cookieSet = document.cookie.includes('afyametrix_token');
-        logger.log('✅ STORAGE VERIFICATION:', {
-          localStorageToken: !!tokenStored,
-          cookieSet,
-          tokenLength: tokenStored?.length
-        });
-        
-        logger.log('🔄 REDIRECTING TO DASHBOARD...');
         // CRITICAL: Force redirect to dashboard
         window.location.href = '/dashboard';
       } else {
-        logger.error('❌ NO ACCESS TOKEN IN RESPONSE');
         throw new Error('No access token received');
       }
     } catch (error: any) {
-      logger.error('💥 LOGIN FAILED:', error);
       setError(error.message || 'Invalid credentials. Please check your email and password.');
       setIsLoading(false);
     }

@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { logger } from "./lib/utils/logger";
 
 // Routes that don't require authentication
 const publicRoutes = [
@@ -32,17 +31,8 @@ export async function middleware(request: NextRequest) {
   // Get token from cookie (SSR compatible)
   const token = request.cookies.get("afyametrix_token")?.value;
 
-  logger.log('🔒 MIDDLEWARE:', {
-    pathname,
-    isProtectedRoute,
-    isPublicRoute,
-    hasToken: !!token,
-    tokenPreview: token ? token.substring(0, 20) + '...' : 'none'
-  });
-
   if (isProtectedRoute) {
     if (!token) {
-      logger.log('❌ MIDDLEWARE: No token, redirecting to login');
       const loginUrl = new URL("/login", request.url);
       loginUrl.searchParams.set("redirect", pathname);
       return NextResponse.redirect(loginUrl);
@@ -50,8 +40,6 @@ export async function middleware(request: NextRequest) {
 
     // EDGE RUNTIME COMPATIBLE: Basic token structure check only
     try {
-      logger.log('🔐 MIDDLEWARE: Using Edge-compatible token validation');
-      
       // Verify token has 3 parts (header.payload.signature)
       const parts = token.split('.');
       if (parts.length !== 3) {
@@ -66,11 +54,9 @@ export async function middleware(request: NextRequest) {
         throw new Error('Token expired');
       }
 
-      logger.log('✅ MIDDLEWARE: Token validation successful');
       // Token looks valid - let it through
       // Full validation will happen on API calls
     } catch (error) {
-      logger.error('❌ MIDDLEWARE: Token validation failed:', error);
       // Clear invalid token and redirect
       const response = NextResponse.redirect(new URL("/login", request.url));
       response.cookies.delete("afyametrix_token");
@@ -81,7 +67,6 @@ export async function middleware(request: NextRequest) {
 
   // Redirect authenticated users from auth pages
   if (isPublicRoute && token && pathname !== "/") {
-    logger.log('🔄 MIDDLEWARE: Authenticated user on auth page, redirecting to dashboard');
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 

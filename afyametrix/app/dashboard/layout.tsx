@@ -32,7 +32,6 @@ export default function DashboardLayout({
         const currentUser = await authService.getCurrentUser();
         setUser(currentUser);
       } catch (error) {
-        console.error("Authentication check failed:", error);
         // Clear any corrupted auth data
         if (typeof window !== 'undefined') {
           localStorage.removeItem(config.auth.tokenKey);
