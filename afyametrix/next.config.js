@@ -3,7 +3,7 @@ const nextConfig = {
   // Production optimizations
   reactStrictMode: true,
   
-  // Image optimization (disable for static export compatibility)
+  // Image optimization (disable for Netlify compatibility)
   images: {
     unoptimized: true,
   },
