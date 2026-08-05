@@ -1,38 +1,38 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Enable static export for Netlify
+  output: 'export',
+  
   // Production optimizations
   reactStrictMode: true,
   
-  // Image optimization (disable for Netlify compatibility)
+  // Disable features not compatible with static export
   images: {
     unoptimized: true,
   },
 
-  // Compression
-  compress: true,
+  // Disable server-side features
+  compress: false,
   
   // Disable telemetry
   productionBrowserSourceMaps: false,
   
-  // Netlify deployment configuration
+  // Static export configuration
   trailingSlash: false,
-  
-  // External packages configuration for Next.js 14.x
-  experimental: {
-    serverComponentsExternalPackages: ['sharp']
-  },
 
   // TypeScript configuration
   typescript: {
-    // Type checking happens in CI/CD pipeline
     ignoreBuildErrors: false,
   },
 
   // ESLint configuration
   eslint: {
-    // Linting happens in CI/CD pipeline
     ignoreDuringBuilds: false,
   },
+
+  // Static asset optimization
+  assetPrefix: '',
+  basePath: '',
 };
 
 module.exports = nextConfig;
