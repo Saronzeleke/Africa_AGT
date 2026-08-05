@@ -1,13 +1,30 @@
 [build]
   base = "afyametrix"
-  command = "npm install --legacy-peer-deps && npm run build"
+  command = "npm ci --legacy-peer-deps && npm run build"
+  publish = "afyametrix/.next"
 
 [build.environment]
   NODE_VERSION = "18"
   NPM_VERSION = "10"
+  NEXT_TELEMETRY_DISABLED = "1"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
 
 [functions]
   external_node_modules = ["sharp"]
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+  conditions = {Role = ["*"]}
+  headers = {X-Robots-Tag = "noindex"}
