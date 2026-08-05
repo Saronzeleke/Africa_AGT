@@ -3,7 +3,7 @@
   command = "npm install --legacy-peer-deps && npm run build"
 
 [build.environment]
-  NODE_VERSION = "20"
+  NODE_VERSION = "18"
   NPM_VERSION = "10"
 
 [[plugins]]
