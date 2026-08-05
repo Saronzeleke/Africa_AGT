@@ -17,6 +17,10 @@
     "prod:build": "npm run type-check && npm run lint && npm run build",
     "setup": "cp .env.local.example .env.local && npm install"
   },
+  "engines": {
+    "node": ">=18.17.0",
+    "npm": ">=9.0.0"
+  },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
     "@radix-ui/react-dialog": "^1.1.2",
