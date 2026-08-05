@@ -18,10 +18,8 @@ const nextConfig: NextConfig = {
   // Netlify deployment configuration
   trailingSlash: false,
   
-  // Ensure proper build output for Netlify
-  experimental: {
-    serverComponentsExternalPackages: ['sharp']
-  },
+  // External packages for serverless functions
+  serverExternalPackages: ['sharp'],
 };
 
 export default nextConfig;
