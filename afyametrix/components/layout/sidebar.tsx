@@ -60,7 +60,7 @@ export function Sidebar({ user, isOnline }: SidebarProps) {
       // Force refresh dashboard data
       window.location.reload();
     } catch (error) {
-      console.error('Refresh error:', error);
+      // Refresh failed silently
     }
   };
 

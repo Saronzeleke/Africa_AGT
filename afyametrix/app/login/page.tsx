@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Link from "next/link";
 import { UserRole } from "@/types";
+import { logger } from "@/lib/utils/logger";
 
 export default function LoginPage() {
   const [role, setRole] = useState<"CHW" | "CHL">("CHW");
@@ -23,11 +24,11 @@ export default function LoginPage() {
     setIsLoading(true);
     setError("");
     
-    console.log('🔐 LOGIN ATTEMPT:', { email, role });
+    logger.log('🔐 LOGIN ATTEMPT:', { email, role });
     
     try {
       const apiUrl = `${process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000'}/api/auth/login`;
-      console.log('🌐 API URL:', apiUrl);
+      logger.log('🌐 API URL:', apiUrl);
       
       // CRITICAL: Use real backend API call (not auth service)
       const response = await fetch(apiUrl, {
@@ -41,7 +42,7 @@ export default function LoginPage() {
         }),
       });
 
-      console.log('📡 API RESPONSE:', {
+      logger.log('📡 API RESPONSE:', {
         status: response.status,
         statusText: response.statusText,
         ok: response.ok
@@ -49,12 +50,12 @@ export default function LoginPage() {
 
       if (!response.ok) {
         const error = await response.json();
-        console.error('❌ LOGIN API ERROR:', error);
+        logger.error('❌ LOGIN API ERROR:', error);
         throw new Error(error.detail || 'Login failed');
       }
 
       const data = await response.json();
-      console.log('✅ LOGIN SUCCESS DATA:', {
+      logger.log('✅ LOGIN SUCCESS DATA:', {
         hasAccessToken: !!data.access_token,
         tokenLength: data.access_token?.length,
         dataKeys: Object.keys(data)
@@ -62,14 +63,20 @@ export default function LoginPage() {
       
       // CRITICAL: Check if we have access_token
       if (data.access_token) {
-        // CRITICAL: Store token in cookie - REMOVE secure flag for localhost
+        // CRITICAL: Store token in localStorage AND cookie for persistence
+        logger.log('💾 STORING TOKEN IN MULTIPLE LOCATIONS...');
+        
+        // Store in localStorage (for API calls)
+        localStorage.setItem('afyametrix_token', data.access_token);
+        
+        // Store in cookie (for middleware)
         const isProduction = process.env.NODE_ENV === 'production';
         const cookieFlags = isProduction 
           ? 'path=/; secure; samesite=strict; max-age=86400'
-          : 'path=/; samesite=strict; max-age=86400';
+          : 'path=/; samesite=lax; max-age=86400'; // Changed to lax for localhost
         
         const cookieString = `afyametrix_token=${data.access_token}; ${cookieFlags}`;
-        console.log('🍪 SETTING COOKIE:', {
+        logger.log('🍪 SETTING COOKIE:', {
           isProduction,
           cookieFlags,
           tokenPreview: data.access_token.substring(0, 20) + '...'
@@ -77,22 +84,34 @@ export default function LoginPage() {
         
         document.cookie = cookieString;
         
-        // Verify cookie was set
+        // Store user data if available
+        if (data.user) {
+          localStorage.setItem('afyametrix_user', JSON.stringify({
+            id: data.user.id,
+            name: data.user.name,
+            email: data.user.email,
+            role: data.user.role,
+          }));
+        }
+        
+        // Verify storage worked
+        const tokenStored = localStorage.getItem('afyametrix_token');
         const cookieSet = document.cookie.includes('afyametrix_token');
-        console.log('🍪 COOKIE VERIFICATION:', {
+        logger.log('✅ STORAGE VERIFICATION:', {
+          localStorageToken: !!tokenStored,
           cookieSet,
-          allCookies: document.cookie
+          tokenLength: tokenStored?.length
         });
         
-        console.log('🔄 REDIRECTING TO DASHBOARD...');
+        logger.log('🔄 REDIRECTING TO DASHBOARD...');
         // CRITICAL: Force redirect to dashboard
         window.location.href = '/dashboard';
       } else {
-        console.error('❌ NO ACCESS TOKEN IN RESPONSE');
+        logger.error('❌ NO ACCESS TOKEN IN RESPONSE');
         throw new Error('No access token received');
       }
     } catch (error: any) {
-      console.error('💥 LOGIN FAILED:', error);
+      logger.error('💥 LOGIN FAILED:', error);
       setError(error.message || 'Invalid credentials. Please check your email and password.');
       setIsLoading(false);
     }

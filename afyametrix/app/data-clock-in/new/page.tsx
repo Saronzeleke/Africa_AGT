@@ -8,16 +8,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ArrowLeft, Plus, Trash2, Upload, X, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { DATA_ENTRY_DISEASES } from "@/lib/constants/diseases";
 
-const diseases = [
-  "Cholera",
-  "Lassa Fever",
-  "Mpox",
-  "Meningitis",
-  "Yellow Fever",
-  "Malaria",
-  "Typhoid",
-];
+
 
 interface CaseRow {
   id: string;
@@ -177,7 +170,7 @@ export default function NewCaseEntryPage() {
                     required
                   >
                     <option value="">- Select -</option>
-                    {diseases.map((disease) => (
+                    {DATA_ENTRY_DISEASES.map((disease) => (
                       <option key={disease} value={disease}>
                         {disease}
                       </option>

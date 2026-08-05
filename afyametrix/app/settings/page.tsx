@@ -72,7 +72,7 @@ export default function SettingsPage() {
         setNotificationSettings(settings);
       }
     } catch (error) {
-      console.error('Failed to load notification settings:', error);
+      // Failed to load notification settings
     }
   };
 
@@ -184,7 +184,6 @@ export default function SettingsPage() {
     try {
       await logout();
     } catch (error) {
-      console.error('Logout error:', error);
       router.push('/login');
     }
   };

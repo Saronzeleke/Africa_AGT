@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { BackButton } from "@/components/ui/back-button";
 import { Button } from "@/components/ui/button";
@@ -31,10 +31,130 @@ interface FilterState {
 export default function AIRecommendationsPage() {
   const [filters, setFilters] = useState<FilterState>({
     country: "Ethiopia",
-    region: "",
+    region: "Somali Region", // Default to first region in backend list
     priority: "",
     resourceType: ""
   });
+
+  // Dynamic regions based on selected country - EXACT BACKEND DATA
+  const getRegionsByCountry = (country: string) => {
+    switch (country) {
+      case "Ethiopia":
+        return [
+          { value: "Somali Region", label: "Somali Region" },
+          { value: "Afar", label: "Afar" },
+          { value: "Sidama", label: "Sidama" },
+          { value: "Oromia", label: "Oromia" },
+          { value: "Amhara", label: "Amhara" },
+          { value: "Addis Ababa", label: "Addis Ababa" },
+          { value: "Tigray", label: "Tigray" }
+        ];
+      case "Kenya":
+        return [
+          { value: "Kisumu", label: "Kisumu" },
+          { value: "Eldoret", label: "Eldoret" },
+          { value: "Nairobi", label: "Nairobi" },
+          { value: "Turkana", label: "Turkana" },
+          { value: "Mandera", label: "Mandera" },
+          { value: "Mombasa", label: "Mombasa" },
+          { value: "Garissa", label: "Garissa" },
+          { value: "Nakuru", label: "Nakuru" }
+        ];
+      case "Uganda":
+        return [
+          { value: "Gulu", label: "Gulu" },
+          { value: "Jinja", label: "Jinja" },
+          { value: "Arua", label: "Arua" },
+          { value: "Mbarara", label: "Mbarara" },
+          { value: "Mbale", label: "Mbale" },
+          { value: "Lira", label: "Lira" },
+          { value: "Kampala", label: "Kampala" }
+        ];
+      case "Senegal":
+        return [
+          { value: "Diourbel", label: "Diourbel" },
+          { value: "Thiès", label: "Thiès" },
+          { value: "Tambacounda", label: "Tambacounda" },
+          { value: "Ziguinchor", label: "Ziguinchor" },
+          { value: "Saint-Louis", label: "Saint-Louis" },
+          { value: "Dakar", label: "Dakar" }
+        ];
+      case "Zambia":
+        return [
+          { value: "Northern Province", label: "Northern Province" },
+          { value: "Lusaka", label: "Lusaka" },
+          { value: "Southern Province", label: "Southern Province" },
+          { value: "Copperbelt", label: "Copperbelt" },
+          { value: "Eastern Province", label: "Eastern Province" }
+        ];
+      case "DRC":
+        return [
+          { value: "Kisangani", label: "Kisangani" },
+          { value: "Kinshasa", label: "Kinshasa" },
+          { value: "Goma", label: "Goma" },
+          { value: "Mbuji-Mayi", label: "Mbuji-Mayi" },
+          { value: "Bukavu", label: "Bukavu" },
+          { value: "Kananga", label: "Kananga" },
+          { value: "Lubumbashi", label: "Lubumbashi" }
+        ];
+      case "Tanzania":
+        return [
+          { value: "Zanzibar", label: "Zanzibar" },
+          { value: "Mbeya", label: "Mbeya" },
+          { value: "Morogoro", label: "Morogoro" },
+          { value: "Dodoma", label: "Dodoma" },
+          { value: "Arusha", label: "Arusha" },
+          { value: "Mwanza", label: "Mwanza" },
+          { value: "Dar es Salaam", label: "Dar es Salaam" }
+        ];
+      case "Sudan":
+        return [
+          { value: "Blue Nile", label: "Blue Nile" },
+          { value: "Khartoum", label: "Khartoum" },
+          { value: "Darfur", label: "Darfur" },
+          { value: "Omdurman", label: "Omdurman" },
+          { value: "Kassala", label: "Kassala" },
+          { value: "Red Sea State", label: "Red Sea State" }
+        ];
+      case "Ghana":
+        return [
+          { value: "Sunyani", label: "Sunyani" },
+          { value: "Northern Region", label: "Northern Region" },
+          { value: "Kumasi", label: "Kumasi" },
+          { value: "Tamale", label: "Tamale" },
+          { value: "Accra", label: "Accra" },
+          { value: "Upper East", label: "Upper East" },
+          { value: "Sekondi", label: "Sekondi" }
+        ];
+      case "Nigeria":
+        return [
+          { value: "Rivers", label: "Rivers" },
+          { value: "Kaduna", label: "Kaduna" },
+          { value: "Borno", label: "Borno" },
+          { value: "Lagos", label: "Lagos" },
+          { value: "Anambra", label: "Anambra" },
+          { value: "Abuja", label: "Abuja" },
+          { value: "Oyo", label: "Oyo" },
+          { value: "Kano", label: "Kano" }
+        ];
+      default:
+        return [{ value: "Unknown", label: "Unknown Region" }];
+    }
+  };
+
+  const availableRegions = getRegionsByCountry(filters.country);
+
+  // Handle country change - auto-select first region of new country
+  const handleCountryChange = (newCountry: string) => {
+    const newRegions = getRegionsByCountry(newCountry);
+    const defaultRegion = newRegions.length > 0 ? newRegions[0].value : "";
+    
+    setFilters(prev => ({
+      ...prev,
+      country: newCountry,
+      region: defaultRegion
+    }));
+  };
 
   const { 
     allocations, 
@@ -45,10 +165,10 @@ export default function AIRecommendationsPage() {
     refetchAll 
   } = useAIRecommendations({
     country: filters.country,
-    region: filters.region || undefined
+    region: filters.region || "Addis Ababa" // Default region to fix 422 error
   });
 
-  // Filter and process data
+  // Filter and process data (moved before any returns)
   const filteredAllocations = useMemo(() => {
     let filtered = allocations;
     
@@ -197,31 +317,41 @@ export default function AIRecommendationsPage() {
     return num?.toString() || '0';
   };
 
+  // Show error state if any errors occurred (moved after all hooks)
   if (error) {
     return (
-      <div className="space-y-6">
-        <BackButton fallbackUrl="/dashboard" />
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-gray-900">AI Recommendations</h1>
-          <Button onClick={handleRefresh} variant="outline" size="sm">
-            <RefreshCw className="w-4 h-4 mr-2" />
-            Retry
-          </Button>
+      <div className="container mx-auto p-6">
+        <BackButton />
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold mb-2 flex items-center gap-3">
+            <Sparkles className="text-blue-600" size={32} />
+            AI Recommendations
+          </h1>
         </div>
-        <Card className="p-8">
-          <div className="flex flex-col items-center justify-center text-center space-y-4">
-            <AlertTriangle className="w-12 h-12 text-red-500" />
-            <h2 className="text-xl font-semibold text-gray-900">
+        
+        <div className="flex items-center justify-center min-h-96">
+          <Card className="p-8 text-center max-w-md mx-auto">
+            <AlertTriangle className="mx-auto text-red-500 mb-4" size={48} />
+            <h3 className="text-lg font-semibold text-red-600 mb-2">
               Unable to Load AI Recommendations
-            </h2>
-            <p className="text-gray-600">
+            </h3>
+            <p className="text-gray-600 mb-4">
               There was an error loading the AI recommendations data. Please try again.
             </p>
-          </div>
-        </Card>
+            <div className="text-sm text-gray-500 mb-4">
+              {error instanceof Error ? error.message : "Network connection error"}
+            </div>
+            <Button onClick={() => refetchAll()} className="flex items-center gap-2">
+              <RefreshCw size={16} />
+              Retry
+            </Button>
+          </Card>
+        </div>
       </div>
     );
   }
+
+
 
   return (
     <div className="space-y-6">
@@ -255,12 +385,19 @@ export default function AIRecommendationsPage() {
           
           <select
             value={filters.country}
-            onChange={(e) => setFilters(prev => ({ ...prev, country: e.target.value }))}
+            onChange={(e) => handleCountryChange(e.target.value)}
             className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="Ethiopia">Ethiopia</option>
             <option value="Kenya">Kenya</option>
             <option value="Uganda">Uganda</option>
+            <option value="Senegal">Senegal</option>
+            <option value="Zambia">Zambia</option>
+            <option value="DRC">DRC</option>
+            <option value="Tanzania">Tanzania</option>
+            <option value="Sudan">Sudan</option>
+            <option value="Ghana">Ghana</option>
+            <option value="Nigeria">Nigeria</option>
           </select>
 
           <select
@@ -268,12 +405,11 @@ export default function AIRecommendationsPage() {
             onChange={(e) => setFilters(prev => ({ ...prev, region: e.target.value }))}
             className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
-            <option value="">All Regions</option>
-            <option value="Addis Ababa">Addis Ababa</option>
-            <option value="Oromia">Oromia</option>
-            <option value="Amhara">Amhara</option>
-            <option value="Tigray">Tigray</option>
-            <option value="Somali Region">Somali Region</option>
+            {availableRegions.map((region) => (
+              <option key={region.value} value={region.value}>
+                {region.label}
+              </option>
+            ))}
           </select>
 
           <select
@@ -471,31 +607,127 @@ export default function AIRecommendationsPage() {
                 <div className="h-4 bg-gray-200 rounded w-3/4"></div>
                 <div className="h-4 bg-gray-200 rounded w-1/2"></div>
               </div>
-            ) : narrative ? (
+            ) : narrative && narrative.narrative ? (
               <div className="space-y-4">
-                {narrative.summary && (
-                  <div className="p-4 bg-blue-50 rounded-lg">
-                    <p className="text-sm text-blue-800">{narrative.summary}</p>
+                {/* Country/Region Overview */}
+                <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                  <div className="flex items-center gap-2 mb-2">
+                    <MapPin className="w-4 h-4 text-blue-600" />
+                    <span className="font-medium text-blue-900">
+                      {narrative.region ? `${narrative.region}, ${narrative.country}` : narrative.country}
+                    </span>
+                  </div>
+                  <p className="text-sm text-blue-800 leading-relaxed">
+                    {narrative.narrative}
+                  </p>
+                </div>
+
+                {/* Country Statistics (for country overview) */}
+                {!narrative.region && narrative.country_stats && (
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="p-3 bg-gray-50 rounded-lg">
+                      <div className="text-xs text-gray-600">Average Risk</div>
+                      <div className="font-semibold text-gray-900">
+                        {narrative.country_stats.average_risk?.toFixed(1) || '0'}/100
+                      </div>
+                    </div>
+                    <div className="p-3 bg-gray-50 rounded-lg">
+                      <div className="text-xs text-gray-600">Total Regions</div>
+                      <div className="font-semibold text-gray-900">
+                        {narrative.country_stats.total_regions || 0}
+                      </div>
+                    </div>
+                    <div className="p-3 bg-gray-50 rounded-lg">
+                      <div className="text-xs text-gray-600">Total Cases</div>
+                      <div className="font-semibold text-gray-900">
+                        {formatNumber(narrative.country_stats.total_cases || 0)}
+                      </div>
+                    </div>
+                    <div className="p-3 bg-gray-50 rounded-lg">
+                      <div className="text-xs text-gray-600">High Risk</div>
+                      <div className="font-semibold text-red-600">
+                        {narrative.country_stats.high_risk_count || 0} regions
+                      </div>
+                    </div>
                   </div>
                 )}
-                
-                {narrative.recommendations && Array.isArray(narrative.recommendations) && (
+
+                {/* Region-specific metrics */}
+                {narrative.region && narrative.metrics && (
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="p-3 bg-gray-50 rounded-lg">
+                      <div className="text-xs text-gray-600">Population</div>
+                      <div className="font-semibold text-gray-900">
+                        {formatNumber(narrative.metrics.population || 0)}
+                      </div>
+                    </div>
+                    <div className="p-3 bg-gray-50 rounded-lg">
+                      <div className="text-xs text-gray-600">Cases</div>
+                      <div className="font-semibold text-gray-900">
+                        {formatNumber(narrative.metrics.cases || 0)}
+                      </div>
+                    </div>
+                    <div className="p-3 bg-gray-50 rounded-lg">
+                      <div className="text-xs text-gray-600">Healthcare Access</div>
+                      <div className="font-semibold text-gray-900">
+                        {narrative.metrics.healthcare_access?.toFixed(1) || 'N/A'}%
+                      </div>
+                    </div>
+                    {narrative.metrics.primary_disease && (
+                      <div className="p-3 bg-red-50 rounded-lg">
+                        <div className="text-xs text-red-600">Primary Concern</div>
+                        <div className="font-semibold text-red-900 capitalize">
+                          {narrative.metrics.primary_disease}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Available Regions (for country overview) */}
+                {!narrative.region && Array.isArray(narrative.available_regions) && narrative.available_regions.length > 0 && (
                   <div className="space-y-2">
-                    <h3 className="font-medium text-gray-900">Key Recommendations:</h3>
-                    <ul className="space-y-2">
-                      {narrative.recommendations.slice(0, 5).map((rec: any, index: number) => (
-                        <li key={index} className="flex items-start gap-2 text-sm text-gray-700">
-                          <TrendingUp className="w-3 h-3 mt-1 text-green-500 flex-shrink-0" />
-                          <span>{rec.title || rec.description || rec}</span>
-                        </li>
+                    <h4 className="text-sm font-medium text-gray-900">Available Regions:</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {narrative.available_regions.slice(0, 6).map((region: string, index: number) => (
+                        <button
+                          key={index}
+                          onClick={() => setFilters(prev => ({ ...prev, region }))}
+                          className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors"
+                        >
+                          {region}
+                        </button>
                       ))}
-                    </ul>
+                      {narrative.available_regions.length > 6 && (
+                        <span className="text-xs text-gray-500 px-2 py-1">
+                          +{narrative.available_regions.length - 6} more
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* High Risk Regions Alert */}
+                {Array.isArray(narrative.high_risk_regions) && narrative.high_risk_regions.length > 0 && (
+                  <div className="p-3 bg-red-50 rounded-lg border border-red-200">
+                    <div className="flex items-center gap-2 mb-2">
+                      <AlertTriangle className="w-4 h-4 text-red-600" />
+                      <span className="text-sm font-medium text-red-900">High Risk Regions</span>
+                    </div>
+                    <div className="flex flex-wrap gap-1">
+                      {narrative.high_risk_regions.map((region: string, index: number) => (
+                        <span key={index} className="text-xs px-2 py-1 bg-red-100 text-red-700 rounded">
+                          {region}
+                        </span>
+                      ))}
+                    </div>
                   </div>
                 )}
                 
-                {narrative.language && (
-                  <div className="text-xs text-gray-500 mt-4">
-                    Language: {narrative.language.toUpperCase()}
+                {/* API Metadata (development only) */}
+                {process.env.NODE_ENV === 'development' && narrative._meta && (
+                  <div className="text-xs text-gray-400 p-2 bg-gray-50 rounded border-l-2 border-gray-300">
+                    API: {narrative._meta.endpoint_version} • Type: {narrative._meta.response_type} • {new Date(narrative._meta.timestamp).toLocaleTimeString()}
                   </div>
                 )}
               </div>

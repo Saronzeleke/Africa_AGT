@@ -51,7 +51,11 @@ class APIClient {
     if (!isBrowser()) return null;
     
     try {
-      return window.localStorage.getItem(config.auth.tokenKey);
+      const token = window.localStorage.getItem(config.auth.tokenKey);
+      if (config.app.environment === "development") {
+        console.log(`🔑 Token found: ${token ? 'YES' : 'NO'}`, token ? `${token.substring(0, 20)}...` : 'null');
+      }
+      return token;
     } catch (error) {
       console.error(`Error reading token from localStorage:`, error);
       return null;
@@ -84,6 +88,13 @@ class APIClient {
     const token = this.getAuthToken();
     if (token) {
       headers["Authorization"] = `Bearer ${token}`;
+      if (config.app.environment === "development") {
+        console.log(`🔒 Adding Authorization header with token`);
+      }
+    } else {
+      if (config.app.environment === "development") {
+        console.warn(`⚠️ No token available for Authorization header`);
+      }
     }
 
     return headers;

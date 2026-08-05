@@ -67,7 +67,6 @@ export default function DataClockInPage() {
         setLastSync(hoursAgo > 0 ? `${hoursAgo}h ago` : "Just now");
       }
     } catch (error) {
-      console.error('Failed to load data:', error);
       // Show empty states when API is not ready
       setEntries([]);
       setDrafts([]);

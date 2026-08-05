@@ -59,7 +59,6 @@ function VerifyEmailContent() {
         router.push("/login");
       }, 2000);
     } catch (error: any) {
-      console.error('Verification error:', error);
       setVerificationStatus("error");
       setErrorMessage(error.message || "Invalid verification code. Please try again.");
     } finally {
@@ -95,7 +94,6 @@ function VerifyEmailContent() {
         }
       }
     } catch (error) {
-      console.error('Resend error:', error);
       alert("Network error. Please check your connection and try again.");
     }
   };

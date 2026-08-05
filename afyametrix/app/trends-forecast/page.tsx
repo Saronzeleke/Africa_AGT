@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { BackButton } from "@/components/ui/back-button";
 import { Button } from "@/components/ui/button";
+import { DiseaseFilter } from "@/components/filters/disease-filter";
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -183,16 +184,12 @@ export default function TrendsForecastPage() {
             ))}
           </select>
 
-          <select 
+          <DiseaseFilter
             value={selectedDisease}
-            onChange={(e) => setSelectedDisease(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
-          >
-            <option value="all">All Diseases</option>
-            {diseases.map(disease => (
-              <option key={disease} value={disease}>{disease}</option>
-            ))}
-          </select>
+            onChange={setSelectedDisease}
+            context="forecasts"
+            placeholder="All Forecast Diseases"
+          />
 
           <div className="flex items-center gap-2">
             <span className="text-sm text-gray-600">Forecast Period:</span>
@@ -222,7 +219,15 @@ export default function TrendsForecastPage() {
           <div className="text-center">
             <Activity className="w-16 h-16 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-gray-900 mb-2">No Forecast Data Available</h3>
-            <p className="text-gray-600">No forecasts match the selected filters. Try adjusting your filter criteria.</p>
+            <p className="text-gray-600 mb-4">
+              {selectedDisease !== "all" 
+                ? `No forecasts available for ${selectedDisease}. Only Meningitis, Cholera, and Dengue have forecast data.`
+                : "No forecasts match the selected filters. Try adjusting your filter criteria."
+              }
+            </p>
+            <p className="text-sm text-gray-500">
+              <strong>Available forecast diseases:</strong> Meningitis, Cholera, Dengue
+            </p>
           </div>
         </Card>
       ) : (

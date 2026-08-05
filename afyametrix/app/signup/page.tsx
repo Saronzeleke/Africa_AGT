@@ -111,7 +111,6 @@ export default function SignupPage() {
         router.push(`/verify-email?email=${encodeURIComponent(formData.email)}`);
       }, 3000);
     } catch (error: any) {
-      console.error('Registration error:', error);
       setErrors({ email: error.message || "Registration failed. Please try again." });
     } finally {
       setIsSubmitting(false);

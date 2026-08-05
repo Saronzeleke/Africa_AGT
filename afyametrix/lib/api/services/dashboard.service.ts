@@ -246,15 +246,63 @@ class DashboardService {
    * Get AI narrative recommendations from health-intelligence
    */
   async getNarrative(params?: { country?: string; region?: string }): Promise<any> {
-    const queryParams = new URLSearchParams();
-    if (params?.country) queryParams.append('country', params.country);
-    if (params?.region) queryParams.append('region', params.region);
-    
-    const endpoint = `/api/health-intelligence/narrative${
-      queryParams.toString() ? `?${queryParams.toString()}` : ""
-    }`;
-    
-    return await apiClient.get(endpoint, { requiresAuth: true });
+    try {
+      const queryParams = new URLSearchParams();
+      if (params?.country) queryParams.append('country', params.country);
+      if (params?.region) queryParams.append('region', params.region);
+      
+      const endpoint = `/api/health-intelligence/narrative${
+        queryParams.toString() ? `?${queryParams.toString()}` : ""
+      }`;
+      
+      const response = await apiClient.get(endpoint, { requiresAuth: true });
+      
+      // Ensure consistent response structure for production
+      return {
+        country: response?.country || params?.country || 'Unknown',
+        region: response?.region || params?.region || null,
+        narrative: response?.narrative || 'No narrative available',
+        available_regions: Array.isArray(response?.available_regions) ? response.available_regions : [],
+        high_risk_regions: Array.isArray(response?.high_risk_regions) ? response.high_risk_regions : [],
+        country_stats: response?.country_stats || {
+          average_risk: 0,
+          total_regions: 0,
+          total_cases: 0,
+          high_risk_count: 0
+        },
+        metrics: response?.metrics || null,
+        _meta: {
+          endpoint_version: 'v1',
+          response_type: response?.region ? 'region_detail' : 'country_overview',
+          timestamp: new Date().toISOString()
+        }
+      };
+    } catch (error) {
+      // Production-grade error handling
+      console.error('Narrative API Error:', error);
+      
+      // Return fallback data structure to prevent UI crashes
+      return {
+        country: params?.country || 'Unknown',
+        region: params?.region || null,
+        narrative: 'Health intelligence data is currently unavailable. Please try again later.',
+        available_regions: [],
+        high_risk_regions: [],
+        country_stats: {
+          average_risk: 0,
+          total_regions: 0,
+          total_cases: 0,
+          high_risk_count: 0
+        },
+        metrics: null,
+        _meta: {
+          endpoint_version: 'v1',
+          response_type: 'error_fallback',
+          timestamp: new Date().toISOString(),
+          error: error instanceof Error ? error.message : 'Unknown error'
+        }
+      };
+    }
   }
 
   /**

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Sidebar } from "@/components/layout/sidebar";
+import { AuthDebug } from "@/components/debug/auth-debug";
 import { User } from "@/types";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";

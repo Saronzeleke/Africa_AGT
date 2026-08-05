@@ -32,7 +32,6 @@ export function BackButton({
       }
     } catch (error) {
       // Safety fallback - redirect to dashboard
-      console.error("Navigation error:", error);
       router.push(fallbackUrl);
     }
   };

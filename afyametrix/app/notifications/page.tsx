@@ -59,7 +59,6 @@ export default function NotificationsPage() {
         setNotifications([]);
       }
     } catch (error) {
-      console.error('Failed to load notifications:', error);
       setNotifications([]);
     } finally {
       setLoading(false);
@@ -101,7 +100,7 @@ export default function NotificationsPage() {
         );
       }
     } catch (error) {
-      console.error('Failed to mark notification as read:', error);
+      // Failed to mark notification as read
     }
   };
 
@@ -123,7 +122,7 @@ export default function NotificationsPage() {
         );
       }
     } catch (error) {
-      console.error('Failed to mark all notifications as read:', error);
+      // Failed to mark all notifications as read
     }
   };
 
@@ -145,7 +144,7 @@ export default function NotificationsPage() {
         );
       }
     } catch (error) {
-      console.error('Failed to delete notification:', error);
+      // Failed to delete notification
     }
   };
 

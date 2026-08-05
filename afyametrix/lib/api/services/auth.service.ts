@@ -197,44 +197,17 @@ class AuthService {
    * Get current user profile
    */
   async getCurrentUser(): Promise<User> {
-    const token = this.getStoredToken();
-    if (!token) {
-      throw new Error('Not authenticated');
-    }
-
-    const response = await fetch(`${config.api.baseUrl}/api/auth/me`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      if (response.status === 401) {
-        this.clearAuthData();
-        throw new Error('Session expired');
-      }
-      const error = await response.json();
-      throw new Error(error.detail || 'Failed to get user profile');
-    }
-
-    const userData = await response.json();
-    return {
-      id: userData.id,
-      name: userData.name,
-      email: userData.email,
-      role: userData.role as UserRole,
-    };
+    return apiClient.get('/api/auth/me', { requiresAuth: true });
   }
 
   /**
    * Store authentication data
    */
   private storeAuthData(response: LoginResponse): void {
-    // Store token in localStorage
+    // Store token in localStorage (primary storage for API calls)
     if (typeof window !== 'undefined') {
       window.localStorage.setItem(config.auth.tokenKey, response.access_token);
+      console.log(`✅ Token stored in localStorage: ${config.auth.tokenKey}`);
     }
     
     // Store user data
@@ -248,6 +221,7 @@ class AuthService {
     // Set cookie for middleware
     if (typeof document !== 'undefined') {
       document.cookie = `afyametrix_token=${response.access_token}; path=/; max-age=${24 * 60 * 60}; SameSite=Lax`;
+      console.log(`✅ Token stored in cookie for middleware`);
     }
   }
 
@@ -291,7 +265,25 @@ class AuthService {
     
     try {
       const token = window.localStorage.getItem(config.auth.tokenKey);
-      return !!token && token !== 'null' && token !== 'undefined';
+      if (!token || token === 'null' || token === 'undefined') {
+        return false;
+      }
+      
+      // Basic JWT expiration check
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        const isExpired = payload.exp <= Date.now() / 1000;
+        if (isExpired) {
+          console.log('🚫 Token expired, clearing auth data');
+          this.clearAuthData();
+          return false;
+        }
+        return true;
+      } catch (error) {
+        console.error('Invalid token format:', error);
+        this.clearAuthData();
+        return false;
+      }
     } catch (error) {
       return false;
     }

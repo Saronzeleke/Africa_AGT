@@ -39,11 +39,11 @@ export const config = {
   },
   
   features: {
-    offlineMode: true,
-    photosEnabled: true,
-    aiRecommendations: false, // Feature flag
-    heatmapEnabled: true, // Feature flag - ENABLED
-    exportEnabled: false, // Feature flag
+    offlineMode: process.env.NEXT_PUBLIC_ENABLE_OFFLINE_MODE !== "false",
+    photosEnabled: process.env.NEXT_PUBLIC_ENABLE_PHOTOS !== "false",
+    aiRecommendations: process.env.NEXT_PUBLIC_ENABLE_AI_RECOMMENDATIONS === "true",
+    heatmapEnabled: process.env.NEXT_PUBLIC_ENABLE_HEATMAP !== "false",
+    exportEnabled: process.env.NEXT_PUBLIC_ENABLE_EXPORT === "true",
   },
 } as const;
 
@@ -67,5 +67,12 @@ export function getApiUrl(endpoint: string): string {
   
   const path = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
   
-  return `${baseUrl}${path}`;
+  const fullUrl = `${baseUrl}${path}`;
+  
+  // Debug logging in development
+  if (isDevelopment) {
+    console.log(`🌐 API URL: ${fullUrl}`);
+  }
+  
+  return fullUrl;
 }
