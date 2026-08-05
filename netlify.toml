@@ -1,7 +1,7 @@
 [build]
   base = "afyametrix"
   command = "npm ci --legacy-peer-deps && npm run build"
-  publish = "afyametrix/.next"
+  publish = ".next"
 
 [build.environment]
   NODE_VERSION = "18"
